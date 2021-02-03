@@ -122,21 +122,33 @@ int main(int argc, char** argv)
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
-	// Our triangle: 3 pairs of (x,y) co-ordinates
+	// Our rectangle corners
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
+		0.5f, 0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
+		-0.5f, -0.5f, 0.0f,
+		-0.5f, 0.5f, 0.0f
 	};
+
+	// Rectangle vertices split into triangles
+	unsigned int indices[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
+	// Create element buffer object to parse indices and vertices into triangles
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// Create a vertex buffer object for sending data to GPU memory
 	unsigned int VBO; // Buffer ID
 	glGenBuffers(1, &VBO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
 
 	// Tell OpenGL how to interpret the vertex array 
 	// (vertex attribute is at location 0, size 3, float type, normalised, stride,
@@ -144,7 +156,11 @@ int main(int argc, char** argv)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
+	// Background color
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+	// Wireframe mode
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -156,7 +172,8 @@ int main(int argc, char** argv)
 		glClear(GL_COLOR_BUFFER_BIT);
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		// Check and call events and swap buffers
 		glfwSwapBuffers(window);
