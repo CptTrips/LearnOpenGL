@@ -131,6 +131,12 @@ int main(int argc, char** argv)
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
+	// Tell OpenGL how to interpret the vertex array 
+	// (vertex attribute is at location 0, size 3, float type, normalised, stride,
+	// first value at start of buffer)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexArrayAttrib(0);
+
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
