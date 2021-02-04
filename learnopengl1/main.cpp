@@ -3,27 +3,7 @@
 #include <fstream>
 #include <glad\glad.h>
 #include <GLFW\glfw3.h>
-
-std::string readFile(const char* file_path)
-{
-	std::string content;
-	std::ifstream fileStream(file_path, std::ios::in);
-
-	if (!fileStream.is_open()) {
-		std::cerr << "Could not read file " << file_path << ". File does not exist." << std::endl;
-		return "";
-	}
-
-	std::string line = "";
-	while (!fileStream.eof()) {
-		std::getline(fileStream, line);
-		content.append(line + "\n");
-	}
-
-	fileStream.close();
-	return content;
-}
-
+#include "Shader.h"
 
 // Function to call when window is resized
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -71,62 +51,7 @@ int main(int argc, char** argv)
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	// Load and compile the vertex shader
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-	std::string vertShaderStr = readFile("VertexShader.glsl");
-	const char* vertexShaderSource = vertShaderStr.c_str();
-	
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	// Check for compile errors
-	int success;
-	char infolog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infolog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infolog << std::endl;
-	}
-
-	// Load and compile the fragment shader
-	unsigned int fragmentShader1;
-	fragmentShader1 = glCreateShader(GL_FRAGMENT_SHADER);
-
-	std::string fragShaderStr = readFile("FragmentShader.glsl");
-	const char* fragmentShader1Source = fragShaderStr.c_str();
-
-	glShaderSource(fragmentShader1, 1, &fragmentShader1Source, NULL);
-	glCompileShader(fragmentShader1);
-
-	// Check for compile errors
-	glGetShaderiv(fragmentShader1, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(fragmentShader1, 512, NULL, infolog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infolog << std::endl;
-	}
-
-	// Combine shaders into shader program
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader1);
-	glLinkProgram(shaderProgram);
-
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infolog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infolog << std::endl;
-	}
-
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader1);
+	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
 
 	// Our rectangle corners
 	/*float vertices[] = {
@@ -206,7 +131,7 @@ int main(int argc, char** argv)
 		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		int vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor");
 		*/
-		glUseProgram(shaderProgram);
+		ourShader.use();
 		//glUniform4f(vertexColorLoc, 0.0f, greenValue, 0.0f, 1.0f);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -221,7 +146,7 @@ int main(int argc, char** argv)
 	// Clean-up
 	//glDeleteVertexArrays(1, &VAO);
 	//glDeleteBuffers(1, &VBO);
-	glDeleteProgram(shaderProgram);
+	//glDeleteProgram(shaderProgram); // should probably implement destructor in Shader
 	glfwTerminate();
 	return 0;
 
