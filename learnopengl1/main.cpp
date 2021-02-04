@@ -4,7 +4,7 @@
 #include <glad\glad.h>
 #include <GLFW\glfw3.h>
 
-const char* readFile(const char* file_path)
+std::string readFile(const char* file_path)
 {
 	std::string content;
 	std::ifstream fileStream(file_path, std::ios::in);
@@ -21,7 +21,7 @@ const char* readFile(const char* file_path)
 	}
 
 	fileStream.close();
-	return content.c_str();
+	return content;
 }
 
 
@@ -75,7 +75,8 @@ int main(int argc, char** argv)
 	unsigned int vertexShader;
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
-	const char* vertexShaderSource = readFile("VertexShader.glsl");
+	std::string vertShaderStr = readFile("VertexShader.glsl");
+	const char* vertexShaderSource = vertShaderStr.c_str();
 	
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 	glCompileShader(vertexShader);
@@ -95,7 +96,10 @@ int main(int argc, char** argv)
 	unsigned int fragmentShader1;
 	fragmentShader1 = glCreateShader(GL_FRAGMENT_SHADER);
 
-	const char* fragmentShader1Source = readFile("FragmentShader.glsl");
+	std::string fragShaderStr = readFile("FragmentShader.glsl");
+	const char* fragmentShader1Source = fragShaderStr.c_str();
+
+	std::cout << fragmentShader1Source;
 
 	glShaderSource(fragmentShader1, 1, &fragmentShader1Source, NULL);
 	glCompileShader(fragmentShader1);
@@ -141,9 +145,9 @@ int main(int argc, char** argv)
 
 	// Vertices for two triangles
 	float vertices[] = {
-		-0.5f, 0.5f, 0.0f,
+		-0.0f, 0.5f, 0.0f,
 		-0.5f, -0.5f, 0.0f,
-		-0.1f, 0.0f, 0.0f
+		0.5f, -0.5f, 0.0f
 	};
 
 
