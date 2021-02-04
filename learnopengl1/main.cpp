@@ -99,8 +99,6 @@ int main(int argc, char** argv)
 	std::string fragShaderStr = readFile("FragmentShader.glsl");
 	const char* fragmentShader1Source = fragShaderStr.c_str();
 
-	std::cout << fragmentShader1Source;
-
 	glShaderSource(fragmentShader1, 1, &fragmentShader1Source, NULL);
 	glCompileShader(fragmentShader1);
 
@@ -145,9 +143,10 @@ int main(int argc, char** argv)
 
 	// Vertices for two triangles
 	float vertices[] = {
-		-0.0f, 0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f
+		// positions		colors
+		-0.0f, 0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f
 	};
 
 
@@ -174,10 +173,18 @@ int main(int argc, char** argv)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// Tell OpenGL how to interpret the vertex array 
-	// (vertex attribute is at location 0, size 3, float type, normalised, stride,
-	// first value at start of buffer)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// for vertex attribute
+	// (vertex attribute is at location 0, size 3 * sizeof(type), type=float,
+	// not normalised, stride 6 floats, first value at start of buffer)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// now for color attribute
+	// (vertex attribute is at location 1, size 3 * sizeof(type), type=float,
+	// not normalised, stride 6 floats, first value 3 floats in)
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float),
+		(void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	// Background color
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -194,11 +201,13 @@ int main(int argc, char** argv)
 		// Rendering
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		/*
 		float timeValue = glfwGetTime();
 		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		int vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor");
+		*/
 		glUseProgram(shaderProgram);
-		glUniform4f(vertexColorLoc, 0.0f, greenValue, 0.0f, 1.0f);
+		//glUniform4f(vertexColorLoc, 0.0f, greenValue, 0.0f, 1.0f);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
