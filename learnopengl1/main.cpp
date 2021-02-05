@@ -3,6 +3,7 @@
 #include <fstream>
 #include <glad\glad.h>
 #include <GLFW\glfw3.h>
+#include "stb_image.h" // image loading library
 #include "Shader.h"
 
 // Function to call when window is resized
@@ -74,6 +75,31 @@ int main(int argc, char** argv)
 		0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f
 	};
 
+	float texCoords[] = {
+		0.0f, 0.0f, // a texture co-ordinate ([0,1]x[0,1]) for each vertex
+		1.0f, 0.0f,
+		0.5f, 1.0f
+	};
+
+	int width, height, nrChannels;
+
+	unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
+			GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+
+	stbi_image_free(data);
 
 	// Bind VAO so we don't have to set up the vertex attributes each time
 	unsigned int VAO;
@@ -131,6 +157,10 @@ int main(int argc, char** argv)
 		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		int vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor");
 		*/
+
+		// Uniform offset
+		unsigned int uniform_loc = glGetUniformLocation(ourShader.ID, "offset");
+		glUniform3f(uniform_loc, 0.0f, 0.0f, 0.0f);
 		ourShader.use();
 		//glUniform4f(vertexColorLoc, 0.0f, greenValue, 0.0f, 1.0f);
 		glBindVertexArray(VAO);
