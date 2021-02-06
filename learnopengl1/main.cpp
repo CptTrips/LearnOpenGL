@@ -55,19 +55,21 @@ int main(int argc, char** argv)
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
 
 	// Our rectangle corners
-	/*float vertices[] = {
-		0.5f, 0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f
+	float vertices[] = {
+		// vertices			// colors			// texture coords
+		0.5f, 0.5f, 0.0f,	1.0f, 0.0f, 0.0f,	1.0f, 1.0f,
+		0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,   1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+		-0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.0f,   0.0f, 1.0f
 	};
 	// Rectangle vertices split into triangles
 	unsigned int indices[] = {
 		0, 1, 3,
 		1, 2, 3
-	};*/
+	};
 
 	// Vertices for two triangles
+	/*
 	float vertices[] = {
 		// positions		colors
 		-0.0f, 0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
@@ -80,7 +82,9 @@ int main(int argc, char** argv)
 		1.0f, 0.0f,
 		0.5f, 1.0f
 	};
+	*/
 
+	// Load texture
 	int width, height, nrChannels;
 
 	unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
@@ -108,13 +112,11 @@ int main(int argc, char** argv)
 	glBindVertexArray(VAO);
 
 	// Create element buffer object to parse indices and vertices into triangles
-	/*
 	unsigned int EBO;
 	glGenBuffers(1, &EBO);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	*/
 
 	// Create a vertex buffer object for sending data to GPU memory
 	unsigned int VBO; // Buffer ID
@@ -127,15 +129,20 @@ int main(int argc, char** argv)
 	// for vertex attribute
 	// (vertex attribute is at location 0, size 3 * sizeof(type), type=float,
 	// not normalised, stride 6 floats, first value at start of buffer)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	// now for color attribute
 	// (vertex attribute is at location 1, size 3 * sizeof(type), type=float,
 	// not normalised, stride 6 floats, first value 3 floats in)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float),
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float),
 		(void*)(3*sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// texture attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float),
+		(void*)(6*sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	// Background color
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -164,9 +171,9 @@ int main(int argc, char** argv)
 		ourShader.use();
 		//glUniform4f(vertexColorLoc, 0.0f, greenValue, 0.0f, 1.0f);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		// Check and call events and swap buffers
 		glfwSwapBuffers(window);
