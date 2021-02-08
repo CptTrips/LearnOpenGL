@@ -6,6 +6,9 @@
 #include "stb_image.h" // image loading library
 #include "Shader.h"
 
+float mix_param;
+const float mix_increment = 1e-3f;
+
 // Function to call when window is resized
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -14,10 +17,27 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 // Function to process all key inputs
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, Shader* s)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	glGetUniformfv(s->ID, glGetUniformLocation(s->ID, "mix_param"), &mix_param);
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{ 
+		mix_param += mix_increment;
+		if (mix_param > 1.0f)
+			mix_param = 1.0f;
+		std::cout << "up" << mix_param << std::endl;
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{ 
+		std::cout << "down" << mix_param << std::endl;
+		mix_param -= mix_increment;
+		if (mix_param < 0.0f)
+			mix_param = 0.0f;
+		//s->setFloat("mix_param", mix_param);
+	}
 }
 
 int main(int argc, char** argv)
@@ -57,10 +77,10 @@ int main(int argc, char** argv)
 	// Our rectangle corners
 	float vertices[] = {
 		// vertices			// colors			// texture coords
-		0.5f, 0.5f, 0.0f,	1.0f, 0.0f, 0.0f,	1.0f, 1.0f,
-		0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,   1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-		-0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.0f,   0.0f, 1.0f
+		0.5f, 0.5f, 0.0f,	1.0f, 0.0f, 0.0f,	2.0f, 2.0f, //top right
+		0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,   2.0f, 0.0f, //bottom right
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f, //bottom left
+		-0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.0f,   0.0f, 2.0f
 	};
 	// Rectangle vertices split into triangles
 	unsigned int indices[] = {
@@ -97,6 +117,8 @@ int main(int argc, char** argv)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	if (data) {
 		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
@@ -109,6 +131,9 @@ int main(int argc, char** argv)
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
 	if (data1) {
 		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
 			GL_RGB, width1, height1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data1);
@@ -169,12 +194,13 @@ int main(int argc, char** argv)
 	ourShader.use();
 	glUniform1i(glGetUniformLocation(ourShader.ID, "ourTexture1"), 0);
 	ourShader.setInt("ourTexture2", 1); // we wrote a class to do the above
+	ourShader.setFloat("mix_param", 0.2f);
 
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
 		// Handle input
-		processInput(window);
+		processInput(window, &ourShader);
 
 		// Rendering
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -184,6 +210,8 @@ int main(int argc, char** argv)
 		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		int vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor");
 		*/
+
+		ourShader.setFloat("mix_param", mix_param);
 
 		// Uniform offset
 		unsigned int uniform_loc = glGetUniformLocation(ourShader.ID, "offset");
