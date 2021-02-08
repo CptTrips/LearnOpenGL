@@ -86,17 +86,32 @@ int main(int argc, char** argv)
 
 	// Load texture
 	int width, height, nrChannels;
+	int width1, height1, nrChannels1;
 
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+	unsigned char* data1 = stbi_load("awesomeface.png", &width1, &height1, &nrChannels1, 0);
 
-	unsigned int texture;
-	glGenTextures(1, &texture);
+	unsigned int textures[2];
+	glGenTextures(2, textures);
 
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
 
 	if (data) {
 		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
 			GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	if (data1) {
+		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
+			GL_RGB, width1, height1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data1);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else {
@@ -150,6 +165,11 @@ int main(int argc, char** argv)
 	// Wireframe mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+	// Assign texture pointer uniforms
+	ourShader.use();
+	glUniform1i(glGetUniformLocation(ourShader.ID, "ourTexture1"), 0);
+	ourShader.setInt("ourTexture2", 1); // we wrote a class to do the above
+
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -170,8 +190,13 @@ int main(int argc, char** argv)
 		glUniform3f(uniform_loc, 0.0f, 0.0f, 0.0f);
 		ourShader.use();
 		//glUniform4f(vertexColorLoc, 0.0f, greenValue, 0.0f, 1.0f);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textures[0]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textures[1]);
+
 		glBindVertexArray(VAO);
-		glBindTexture(GL_TEXTURE_2D, texture);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
