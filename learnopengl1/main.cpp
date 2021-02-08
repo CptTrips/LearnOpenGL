@@ -3,6 +3,9 @@
 #include <fstream>
 #include <glad\glad.h>
 #include <GLFW\glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "stb_image.h" // image loading library
 #include "Shader.h"
 
@@ -190,10 +193,11 @@ int main(int argc, char** argv)
 	// Wireframe mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	// Assign texture pointer uniforms
+	// Assign uniforms
 	ourShader.use();
 	glUniform1i(glGetUniformLocation(ourShader.ID, "ourTexture1"), 0);
 	ourShader.setInt("ourTexture2", 1); // we wrote a class to do the above
+
 	ourShader.setFloat("mix_param", 0.2f);
 
 	// Main rendering loop
@@ -210,6 +214,10 @@ int main(int argc, char** argv)
 		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		int vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor");
 		*/
+		glm::mat4 trans = glm::mat4(1.0f);
+		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+		trans = glm::rotate(trans, (float)(glfwGetTime()*0.1), glm::vec3(0.0, 0.0, 1.0));
+		ourShader.setMat4("transform", &trans);
 
 		ourShader.setFloat("mix_param", mix_param);
 
