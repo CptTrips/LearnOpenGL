@@ -77,45 +77,101 @@ int main(int argc, char** argv)
 
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
 
-	// Our rectangle corners
+	// Our cube corners
 	float vertices[] = {
-		// vertices			// colors			// texture coords
-		0.5f, 0.5f, 0.0f,	1.0f, 0.0f, 0.0f,	2.0f, 2.0f, //top right
-		0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,   2.0f, 0.0f, //bottom right
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f, //bottom left
-		-0.5f, 0.5f, 0.0f,	1.0f, 1.0f, 0.0f,   0.0f, 2.0f
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
+
+	/*
 	// Rectangle vertices split into triangles
 	unsigned int indices[] = {
 		0, 1, 3,
 		1, 2, 3
-	};
+	};*/
 
-	glm::mat4 model = glm::mat4(1.0f); // model transform
-	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-	glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, -3.0f);
-	glm::mat4 view = glm::mat4(1.0f); // view transform
-	view = glm::translate(view, cam_pos);
-	
-	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
-	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
+	// Bind VAO so we don't have to set up the vertex attributes each time
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
 
-	// Vertices for two triangles
+	glBindVertexArray(VAO);
+
+	// Create element buffer object to parse indices and vertices into triangles
 	/*
-	float vertices[] = {
-		// positions		colors
-		-0.0f, 0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f
-	};
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
 
-	float texCoords[] = {
-		0.0f, 0.0f, // a texture co-ordinate ([0,1]x[0,1]) for each vertex
-		1.0f, 0.0f,
-		0.5f, 1.0f
-	};
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	*/
+
+	// Create a vertex buffer object for sending data to GPU memory
+	unsigned int VBO; // Buffer ID
+	glGenBuffers(1, &VBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// Tell OpenGL how to interpret the vertex array 
+	// for vertex attribute
+	// (vertex attribute is at location 0, size 3 * sizeof(type), type=float,
+	// not normalised, stride 6 floats, first value at start of buffer)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	/*
+	// now for color attribute
+	// (vertex attribute is at location 1, size 3 * sizeof(type), type=float,
+	// not normalised, stride 6 floats, first value 3 floats in)
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float),
+		(void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
+	*/
+
+	// texture attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float),
+		(void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	// Load texture
 	int width, height, nrChannels;
@@ -158,50 +214,22 @@ int main(int argc, char** argv)
 
 	stbi_image_free(data);
 
-	// Bind VAO so we don't have to set up the vertex attributes each time
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-
-	glBindVertexArray(VAO);
-
-	// Create element buffer object to parse indices and vertices into triangles
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	// Create a vertex buffer object for sending data to GPU memory
-	unsigned int VBO; // Buffer ID
-	glGenBuffers(1, &VBO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// Tell OpenGL how to interpret the vertex array 
-	// for vertex attribute
-	// (vertex attribute is at location 0, size 3 * sizeof(type), type=float,
-	// not normalised, stride 6 floats, first value at start of buffer)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// now for color attribute
-	// (vertex attribute is at location 1, size 3 * sizeof(type), type=float,
-	// not normalised, stride 6 floats, first value 3 floats in)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float),
-		(void*)(3*sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// texture attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float),
-		(void*)(6*sizeof(float)));
-	glEnableVertexAttribArray(2);
-
 	// Background color
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 	// Wireframe mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// 3D Transformations
+	glm::mat4 model = glm::mat4(1.0f); // model transform
+	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, -3.0f);
+	glm::mat4 view = glm::mat4(1.0f); // view transform
+	view = glm::translate(view, cam_pos);
+	
+	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
+	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 
 	// Assign uniforms
 	ourShader.use();
@@ -247,8 +275,10 @@ int main(int argc, char** argv)
 		glBindTexture(GL_TEXTURE_2D, textures[1]);
 
 		glBindVertexArray(VAO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Check and call events and swap buffers
 		glfwSwapBuffers(window);
