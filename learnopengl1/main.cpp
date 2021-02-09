@@ -242,6 +242,9 @@ int main(int argc, char** argv)
 	ourShader.setMat4("view", &view);
 	ourShader.setMat4("projection", &projection);
 
+	// Enable z-buffer depth test
+	glEnable(GL_DEPTH_TEST);
+
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -249,7 +252,7 @@ int main(int argc, char** argv)
 		processInput(window, &ourShader);
 
 		// Rendering
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		/*
 		float timeValue = glfwGetTime();
@@ -261,13 +264,11 @@ int main(int argc, char** argv)
 		ourShader.setMat4("transform", &trans);
 		*/
 
-		ourShader.setFloat("mix_param", mix_param);
+		model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * glm::radians(50.f),
+			glm::vec3(0.5f, 0.1f, 0.0f));
+		ourShader.setMat4("model", &model);
 
-		// Uniform offset
-		unsigned int uniform_loc = glGetUniformLocation(ourShader.ID, "offset");
-		glUniform3f(uniform_loc, 0.0f, 0.0f, 0.0f);
-		ourShader.use();
-		//glUniform4f(vertexColorLoc, 0.0f, greenValue, 0.0f, 1.0f);
+		ourShader.setFloat("mix_param", mix_param);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, textures[0]);
