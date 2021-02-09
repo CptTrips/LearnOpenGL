@@ -91,6 +91,16 @@ int main(int argc, char** argv)
 		1, 2, 3
 	};
 
+	glm::mat4 model = glm::mat4(1.0f); // model transform
+	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, -3.0f);
+	glm::mat4 view = glm::mat4(1.0f); // view transform
+	view = glm::translate(view, cam_pos);
+	
+	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
+	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
+
 	// Vertices for two triangles
 	/*
 	float vertices[] = {
@@ -200,6 +210,10 @@ int main(int argc, char** argv)
 
 	ourShader.setFloat("mix_param", 0.2f);
 
+	ourShader.setMat4("model", &model);
+	ourShader.setMat4("view", &view);
+	ourShader.setMat4("projection", &projection);
+
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -213,11 +227,11 @@ int main(int argc, char** argv)
 		float timeValue = glfwGetTime();
 		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		int vertexColorLoc = glGetUniformLocation(shaderProgram, "ourColor");
-		*/
 		glm::mat4 trans = glm::mat4(1.0f);
 		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
 		trans = glm::rotate(trans, (float)(glfwGetTime()*0.1), glm::vec3(0.0, 0.0, 1.0));
 		ourShader.setMat4("transform", &trans);
+		*/
 
 		ourShader.setFloat("mix_param", mix_param);
 
