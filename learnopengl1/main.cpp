@@ -237,9 +237,12 @@ int main(int argc, char** argv)
 	glm::mat4 model = glm::mat4(1.0f); // model transform
 	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-	glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, -3.0f);
-	glm::mat4 view = glm::mat4(1.0f); // view transform
-	view = glm::translate(view, cam_pos);
+	const float radius = 10.f;
+	glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, radius);
+	glm::vec3 cam_tgt = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cam_dir = glm::normalize(cam_tgt - cam_pos);
+	glm::vec3 cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::mat4 view = glm::lookAt(cam_pos, cam_tgt, cam_up); // view transform
 	
 	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
@@ -258,6 +261,7 @@ int main(int argc, char** argv)
 	// Enable z-buffer depth test
 	glEnable(GL_DEPTH_TEST);
 
+	float t = 0;
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -277,15 +281,24 @@ int main(int argc, char** argv)
 		ourShader.setMat4("transform", &trans);
 		*/
 
+		t = glfwGetTime();
+		
+		// rotating blocks
 		for (unsigned int i = 0; i < 10; i++)
 		{
 			model = glm::translate(glm::mat4(1.0f), cubePositions[i]);
-			model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.f),
+			model = glm::rotate(model, t*glm::radians(50.f),
 				glm::vec3(0.5f, 0.1f, 0.0f));
 			ourShader.setMat4("model", &model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+
+		// orbiting camera
+		float freq = 1.0f;
+		cam_pos = radius * glm::vec3(sin(t * freq), 0., cos(t * freq));
+		view = glm::lookAt(cam_pos, cam_tgt, cam_up);
+		ourShader.setMat4("view", &view);
 
 		ourShader.setFloat("mix_param", mix_param);
 
