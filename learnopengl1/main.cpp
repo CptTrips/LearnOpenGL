@@ -12,6 +12,21 @@
 float mix_param;
 const float mix_increment = 1e-3f;
 
+const float radius = 10.f;
+glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, -radius);
+glm::vec3 cam_fwd = glm::vec3(0.0f, 0.0f, 1.0f);
+glm::vec3 cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float t = 0.f;
+float dt = 0.f;
+
+bool first_mouse = true;
+const float mouse_sensitivity = 0.001f;
+float mouse_x, mouse_y = 0.;
+float phi = 0;
+float theta = glm::radians(90.);
+
+
 // Function to call when window is resized
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -41,6 +56,60 @@ void processInput(GLFWwindow* window, Shader* s)
 			mix_param = 0.0f;
 		//s->setFloat("mix_param", mix_param);
 	}
+
+	float cam_speed;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	{
+		cam_speed = 8.f;
+		std::cout << cam_speed << std::endl;
+	}
+	else {
+		cam_speed = 4.f;
+		std::cout << cam_speed << std::endl;
+	}
+	float cam_ds = cam_speed * dt;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		cam_pos += cam_ds * cam_fwd;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		cam_pos += glm::normalize(glm::cross(cam_up, cam_fwd)) * cam_ds;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		cam_pos -= glm::normalize(glm::cross(cam_up, cam_fwd)) * cam_ds;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		cam_pos -= cam_ds * cam_fwd;
+	}
+ }
+
+void mouse_callback(GLFWwindow* window, double x, double y)
+{
+	if (first_mouse)
+	{
+		mouse_x = x;
+		mouse_y = y;
+		first_mouse = false;
+	}
+
+	float dphi = (x - mouse_x) * mouse_sensitivity;
+	float dtheta = (y - mouse_y) * mouse_sensitivity;
+
+	mouse_x = x;
+	mouse_y = y;
+
+	phi += dphi;
+	phi = glm::mod(phi, 2.f * glm::pi<float>());
+	
+	theta += dtheta;
+	glm::clamp(theta, 0.f, glm::pi<float>());
+
+	//std::cout << '(' << theta << ',' << phi << ')' << std::endl;
+
+	cam_fwd = glm::vec3(-sin(phi) * sin(theta), cos(theta), cos(phi) * sin(theta));
 }
 
 int main(int argc, char** argv)
@@ -72,8 +141,11 @@ int main(int argc, char** argv)
 	glViewport(0, 0, 800, 600);
 
 	// Specify the resize callback function so viewport adapts on window resize
-
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	// Capture mouse and process movement
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
 
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
 
@@ -237,12 +309,7 @@ int main(int argc, char** argv)
 	glm::mat4 model = glm::mat4(1.0f); // model transform
 	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-	const float radius = 10.f;
-	glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, radius);
-	glm::vec3 cam_tgt = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 cam_dir = glm::normalize(cam_tgt - cam_pos);
-	glm::vec3 cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	glm::mat4 view = glm::lookAt(cam_pos, cam_tgt, cam_up); // view transform
+	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
 	
 	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
@@ -261,7 +328,6 @@ int main(int argc, char** argv)
 	// Enable z-buffer depth test
 	glEnable(GL_DEPTH_TEST);
 
-	float t = 0;
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -281,7 +347,9 @@ int main(int argc, char** argv)
 		ourShader.setMat4("transform", &trans);
 		*/
 
-		t = glfwGetTime();
+		float new_t = glfwGetTime();
+		dt = new_t - t;
+		t = new_t;
 		
 		// rotating blocks
 		for (unsigned int i = 0; i < 10; i++)
@@ -294,10 +362,7 @@ int main(int argc, char** argv)
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
-		// orbiting camera
-		float freq = 1.0f;
-		cam_pos = radius * glm::vec3(sin(t * freq), 0., cos(t * freq));
-		view = glm::lookAt(cam_pos, cam_tgt, cam_up);
+		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
 		ourShader.setMat4("view", &view);
 
 		ourShader.setFloat("mix_param", mix_param);
