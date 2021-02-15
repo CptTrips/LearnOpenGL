@@ -78,8 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\sodai\Projects\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\sodai\Projects\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\sodai\Documents\projects\shared\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\sodai\Documents\projects\shared\lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -146,6 +146,12 @@
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="stb_image_boilerplate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
