@@ -276,6 +276,9 @@ int main(int argc, char** argv)
 	ourShader.setVec3("object_color", 1.0f, 0.5f, 0.31f);
 	ourShader.setVec3("light_color", 1.0f, 1.0f, 1.0f);
 
+	light_source_shader.use();
+	light_source_shader.setMat4("projection", &projection);
+
 	// Enable z-buffer depth test
 	glEnable(GL_DEPTH_TEST);
 
@@ -312,7 +315,7 @@ int main(int argc, char** argv)
 		model = glm::scale(model, glm::vec3(0.2f));
 		light_source_shader.setMat4("model", &model);
 
-		ourShader.setMat4("view", &view);
+		light_source_shader.setMat4("view", &view);
 
 		glBindVertexArray(light_vao);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
