@@ -3,29 +3,46 @@ in vec3 normal;
 in vec3 world_pos;
 out vec4 FragColor;
 
-uniform vec3 object_color;
-uniform vec3 light_color;
-uniform vec3 light_pos;
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+};
+
+uniform Material material;
+
+struct Light {
+    vec3 position;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+
+uniform Light light;
+
 uniform vec3 view_pos;
 
 void main()
 {
     vec3 unit_normal = normalize(normal);
-    vec3 light_dir = normalize(light_pos - world_pos);
+    vec3 light_dir = normalize(light.position - world_pos);
 
     vec3 view_dir = normalize(view_pos - world_pos);
     vec3 reflect_dir = reflect(-light_dir, unit_normal);
 
-    float reflectance = 0.5;
+    //specular
     float specular_intensity = pow(max(dot(view_dir, reflect_dir), 0.), 32);
-    vec3 specular =  specular_intensity * reflectance * light_color;
+    vec3 specular_color = specular_intensity * material.specular * light.specular;
 
-    vec3 diffuse_color = max(dot(unit_normal, light_dir), 0.) * light_color;
+    //diffuse
+    float diffuse_intensity = max(dot(unit_normal, light_dir), 0.);
+    vec3 diffuse_color = diffuse_intensity * material.diffuse * light.ambient;
 
-    float ambient_intensity = 0.1;
-    vec3 ambient_color_density = ambient_intensity * light_color;
+    //ambient
+    vec3 ambient_color = material.ambient * light.ambient;
 
-    vec3 reflected_color = (specular + diffuse_color + ambient_color_density) * object_color;
+    vec3 reflected_color = (specular_color + diffuse_color + ambient_color);
 
     FragColor = vec4(reflected_color, 1.0);
 }

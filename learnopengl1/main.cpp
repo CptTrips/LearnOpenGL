@@ -267,6 +267,11 @@ int main(int argc, char** argv)
 	glm::vec3 light_pos_0 = glm::vec3(1.2f, 1.0f, 2.0f);
 	glm::vec3 light_pos = light_pos_0;
 
+	glm::vec3 light_color_0 = glm::vec3(1.f, 1.f, 1.f) * (1.f / sqrt(3.f));
+	glm::vec3 light_color;
+	glm::vec3 color_axis_0 = glm::vec3(-1.f, -1.f, 1.f) * (1.f / sqrt(3.f));
+	glm::vec3 color_axis_1 = glm::cross(light_color_0, color_axis_0);
+
 	// Assign uniforms
 	ourShader.use();
 
@@ -274,11 +279,18 @@ int main(int argc, char** argv)
 	ourShader.setMat4("view", &view);
 	ourShader.setMat4("projection", &projection);
 
-	ourShader.setVec3("object_color", 1.0f, 0.5f, 0.31f);
-	ourShader.setVec3("light_color", 1.0f, 1.0f, 1.0f);
+	ourShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+	ourShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+	ourShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+	ourShader.setFloat("material.shininess", 32.0f);
+
+	ourShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+	ourShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+	ourShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
 	light_source_shader.use();
 	light_source_shader.setMat4("projection", &projection);
+	light_source_shader.setVec3("light_color", &light_color_0);
 
 	// Background color
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -303,6 +315,8 @@ int main(int argc, char** argv)
 
 		light_pos = light_pos_0 + (float)sin(3. * t) * glm::vec3(0., 0., 1.);
 
+		light_color = light_color_0 + sin(2.f *t) * color_axis_0 + cos(2.f * t) * color_axis_1;
+
 		// illuminated cube
 		ourShader.use();
 		model = glm::mat4(1.0f);
@@ -312,8 +326,15 @@ int main(int argc, char** argv)
 
 		ourShader.setMat4("view", &view);
 
-		ourShader.setVec3("light_pos", light_pos.x, light_pos.y, light_pos.z);
+		ourShader.setVec3("light.position", light_pos.x, light_pos.y, light_pos.z);
 		ourShader.setVec3("view_pos", &cam_pos);
+
+		glm::vec3 light_ambient = 0.2f * light_color;
+		glm::vec3 light_diffuse = 0.5f * light_color;
+		glm::vec3 light_specular = 1.f * light_color;
+
+		ourShader.setVec3("light.ambient", &light_ambient);
+		ourShader.setVec3("light.diffuse", &light_diffuse);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -325,6 +346,8 @@ int main(int argc, char** argv)
 		light_source_shader.setMat4("model", &model);
 
 		light_source_shader.setMat4("view", &view);
+
+		light_source_shader.setVec3("light_color", &light_color);
 
 		glBindVertexArray(light_vao);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
