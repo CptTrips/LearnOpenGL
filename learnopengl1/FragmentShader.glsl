@@ -34,6 +34,15 @@ struct FarLight {
 
 uniform FarLight far_light;
 
+struct Flashlight {
+    vec3 offset; //offset from camera
+    vec3 direction;
+    vec3 color;
+    float intensity;
+};
+
+uniform Flashlight flashlight;
+
 uniform vec3 view_pos;
 
 vec3 specular_color(vec3 incident_intensity, vec3 unit_normal, vec3 light_dir)
@@ -86,15 +95,37 @@ vec3 far_light_illumination(vec3 unit_normal) {
 
     vec3 sc = specular_color(far_light.intensity*far_light.specular, unit_normal, light_dir);
 
-    //diffuse
-    vec3 dc = specular_color(far_light.intensity*far_light.diffuse, unit_normal, light_dir);
+    vec3 dc = diffuse_color(far_light.intensity*far_light.diffuse, unit_normal, light_dir);
 
-    //ambient
     vec3 ambient_color = vec3(texture(material.diffuse, tex_coord)) * far_light.ambient;
 
     vec3 reflected_color = sc + dc + ambient_color;
 
     return reflected_color;
+}
+
+vec3 flashlight_illumination(vec3 unit_normal) {
+
+    vec3 light_to_world = world_pos - (view_pos); //+ flashlight.offset);
+
+    vec3 light_dir = normalize(light_to_world);
+
+    float costheta = dot(normalize(flashlight.direction), light_dir);
+
+    vec3 color_intensity = flashlight.intensity * flashlight.color;
+
+    vec3 ac = vec3(texture(material.diffuse, tex_coord)) * color_intensity * 0.;
+
+    if (costheta < 0.98) {
+		return ac;
+	}
+    
+    vec3 sc = specular_color(color_intensity, unit_normal, -light_dir);
+
+    vec3 dc = diffuse_color(color_intensity, unit_normal, -light_dir);
+
+
+    return sc + ac + dc;
 }
 
 void main()
@@ -104,5 +135,6 @@ void main()
 
     vec3 local_color = local_light_illumination(unit_normal);
     vec3 far_color = far_light_illumination(unit_normal);
-    FragColor = vec4(local_color + far_color, 1.0);
+    vec3 flash_color = flashlight_illumination(unit_normal);
+    FragColor = vec4(local_color + far_color + flash_color, 1.0);
 }

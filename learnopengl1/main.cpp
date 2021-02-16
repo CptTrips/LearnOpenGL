@@ -6,6 +6,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/ext.hpp>
 #include "stb_image.h" // image loading library
 #include "Shader.h"
 
@@ -309,6 +311,9 @@ int main(int argc, char** argv)
 	glm::vec3 sunlight_specular = sunlight_color;
 	glm::vec3 sunlight_dir = glm::normalize(glm::vec3(0.1f, 1.f, 0.2f));
 
+	glm::vec4 flashlight_offset_viewspace = glm::vec4(0.f);// -0.1f, 0.f, 0.1f, 1.f);;
+	glm::vec3 flashlight_offset;
+
 	// Assign uniforms
 	ourShader.use();
 
@@ -331,6 +336,9 @@ int main(int argc, char** argv)
 	ourShader.setVec3("far_light.diffuse", &sunlight_diffuse);
 	ourShader.setVec3("far_light.specular", &sunlight_specular);
 	ourShader.setFloat("far_light.intensity", 5.f);
+
+	ourShader.setVec3("flashlight.color", 1.0f, 1.0f, 1.0f);
+	ourShader.setFloat("flashlight.intensity", 2.f);
 
 	light_source_shader.use();
 	light_source_shader.setMat4("projection", &projection);
@@ -376,6 +384,7 @@ int main(int argc, char** argv)
 
 		glClearColor(0.1f*light_color.x, 0.1f*light_color.y, 0.1f*light_color.z, 1.0f);
 
+
 		// illuminated cube
 		ourShader.use();
 		model = glm::mat4(1.0f);
@@ -394,6 +403,11 @@ int main(int argc, char** argv)
 
 		ourShader.setVec3("light.ambient", &light_ambient);
 		ourShader.setVec3("light.diffuse", &light_diffuse);
+
+		flashlight_offset = glm::vec3(glm::inverse(view) * flashlight_offset_viewspace);
+		ourShader.setVec3("flashlight.offset", &flashlight_offset);
+		std::cout << glm::to_string(cam_fwd) << std::endl;
+		ourShader.setVec3("flashlight.direction", cam_fwd.x, cam_fwd.y, cam_fwd.z);
 
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 10; i++)
