@@ -1,11 +1,11 @@
 #version 330 core
 in vec3 normal;
 in vec3 world_pos;
+in vec2 tex_coord;
 out vec4 FragColor;
 
 struct Material {
-    vec3 ambient;
-    vec3 diffuse;
+    sampler2D diffuse;
     vec3 specular;
     float shininess;
 };
@@ -37,10 +37,10 @@ void main()
 
     //diffuse
     float diffuse_intensity = max(dot(unit_normal, light_dir), 0.);
-    vec3 diffuse_color = diffuse_intensity * material.diffuse * light.ambient;
+    vec3 diffuse_color = diffuse_intensity * vec3(texture(material.diffuse, tex_coord)) * light.diffuse;
 
     //ambient
-    vec3 ambient_color = material.ambient * light.ambient;
+    vec3 ambient_color = vec3(texture(material.diffuse, tex_coord)) * light.ambient;
 
     vec3 reflected_color = (specular_color + diffuse_color + ambient_color);
 
