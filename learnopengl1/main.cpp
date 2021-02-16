@@ -260,6 +260,29 @@ int main(int argc, char** argv)
 
 	stbi_image_free(data);
 
+	unsigned int emissive_map;
+	glGenTextures(1, &emissive_map);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, emissive_map);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	//stbi_set_flip_vertically_on_load(true);
+	data = stbi_load("matrix.jpg", &width, &height, &nrChannels, 0);
+
+	if (data) {
+		// GL_RGB for jpg, GL_RGBA for png
+		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
+			GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+
+	stbi_image_free(data);
+
 	// Wireframe mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -275,7 +298,7 @@ int main(int argc, char** argv)
 	glm::vec3 light_pos_0 = glm::vec3(1.2f, 1.0f, 2.0f);
 	glm::vec3 light_pos = light_pos_0;
 
-	glm::vec3 light_color_0 = glm::vec3(1.f, 1.f, 1.f) * (1.f / sqrt(3.f));
+	glm::vec3 light_color_0 = 0.1f*glm::vec3(1.f, 1.f, 1.f) * (1.f / sqrt(3.f));
 	glm::vec3 light_color;
 	glm::vec3 color_axis_0 = glm::vec3(-1.f, -1.f, 1.f) * (1.f / sqrt(3.f));
 	glm::vec3 color_axis_1 = glm::cross(light_color_0, color_axis_0);
@@ -288,8 +311,10 @@ int main(int argc, char** argv)
 	ourShader.setMat4("projection", &projection);
 
 	ourShader.setFloat("material.shininess", 32.0f);
-	ourShader.setInt("materia.diffuse", 0);
-	ourShader.setInt("materia.specular", 1);
+	ourShader.setInt("material.diffuse", 0);
+	ourShader.setInt("material.specular", 1);
+	ourShader.setInt("material.emissive", 2);
+
 
 	ourShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
 	ourShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
