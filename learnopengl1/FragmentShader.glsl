@@ -6,7 +6,7 @@ out vec4 FragColor;
 
 struct Material {
     sampler2D diffuse;
-    vec3 specular;
+    sampler2D specular;
     float shininess;
 };
 
@@ -33,7 +33,7 @@ void main()
 
     //specular
     float specular_intensity = pow(max(dot(view_dir, reflect_dir), 0.), 32);
-    vec3 specular_color = specular_intensity * material.specular * light.specular;
+    vec3 specular_color = specular_intensity * vec3(texture(material.specular, tex_coord)) * light.specular;
 
     //diffuse
     float diffuse_intensity = max(dot(unit_normal, light_dir), 0.);
