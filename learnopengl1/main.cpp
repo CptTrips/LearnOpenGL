@@ -93,6 +93,22 @@ void mouse_callback(GLFWwindow* window, double x, double y)
 	cam_fwd = glm::vec3(-sin(phi) * sin(theta), cos(theta), cos(phi) * sin(theta));
 }
 
+const float pupil_M_offset = 4.9;
+const float pupil_M_factor = 3.;
+float pupil_M(float D) {
+	return glm::atanh((D - pupil_M_offset) / pupil_M_factor);
+};
+
+const float eps = 1e-6;
+float pupil_dD_dt(float D, float luminance) {
+
+	// estiamte gradient 
+	float dM_dD = pupil_M(D + eps) - pupil_M(D - eps) / (2.f * eps);
+
+	float Phi = luminance * glm::pi<float>() / 4.f * D * D;
+
+	return (1.f / dM_dD) * (2.3026 * pupil_M(D) - 5.2 + 0.45 * glm::log(Phi / 4.8118e-10));
+}
 int main(int argc, char** argv)
 {
 	// Initialize GLFW
@@ -377,6 +393,11 @@ int main(int argc, char** argv)
 		glm::vec3(1.5f,  0.2f, -1.5f),
 		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
+
+
+	// Pupillary light reflex
+	float pupil_D = 4.9f; // Pupil diameter
+
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
