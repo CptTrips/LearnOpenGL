@@ -13,7 +13,7 @@ struct Material {
 
 uniform Material material;
 
-struct Light {
+struct PointLight {
     vec3 position;
     vec3 ambient;
     vec3 diffuse;
@@ -21,10 +21,11 @@ struct Light {
     float intensity;
 };
 
-uniform Light light;
+#define POINT_LIGHT_COUNT 4
+uniform PointLight point_lights[POINT_LIGHT_COUNT];
 
 
-struct FarLight {
+struct PlanarLight {
     vec3 direction;
     vec3 ambient;
     vec3 diffuse;
@@ -32,7 +33,7 @@ struct FarLight {
     float intensity;
 };
 
-uniform FarLight far_light;
+uniform PlanarLight planar_light;
 
 struct Flashlight {
     vec3 offset; //offset from camera
@@ -66,19 +67,19 @@ vec3 diffuse_color(vec3 incident_intensity, vec3 unit_normal, vec3 light_dir)
     return diffuse_color;
 }
 
-vec3 local_light_illumination(vec3 unit_normal) {
+vec3 point_light_illumination(vec3 unit_normal, PointLight point_light) {
     
-    vec3 light_to_world = light.position - world_pos;
+    vec3 light_to_world = point_light.position - world_pos;
     vec3 light_dir = normalize(light_to_world);
-    float incident_intensity = light.intensity / dot(light_to_world, light_to_world);
+    float incident_intensity = point_light.intensity / dot(light_to_world, light_to_world);
 
-    vec3 sc = specular_color(incident_intensity*light.specular, unit_normal, light_dir);
+    vec3 sc = specular_color(incident_intensity*point_light.specular, unit_normal, light_dir);
 
     //diffuse
-    vec3 dc = diffuse_color(incident_intensity * light.diffuse, unit_normal, light_dir);
+    vec3 dc = diffuse_color(incident_intensity * point_light.diffuse, unit_normal, light_dir);
 
     //ambient
-    vec3 ambient_color = vec3(texture(material.diffuse, tex_coord)) * light.ambient;
+    vec3 ambient_color = vec3(texture(material.diffuse, tex_coord)) * point_light.ambient;
 
     //emissive
     vec3 emissive_color = vec3(0.);//vec3(texture(material.emissive, tex_coord));
@@ -89,15 +90,15 @@ vec3 local_light_illumination(vec3 unit_normal) {
 
 }
 
-vec3 far_light_illumination(vec3 unit_normal) {
+vec3 planar_light_illumination(vec3 unit_normal) {
 
-    vec3 light_dir = normalize(far_light.direction);
+    vec3 light_dir = normalize(planar_light.direction);
 
-    vec3 sc = specular_color(far_light.intensity*far_light.specular, unit_normal, light_dir);
+    vec3 sc = specular_color(planar_light.intensity*planar_light.specular, unit_normal, light_dir);
 
-    vec3 dc = diffuse_color(far_light.intensity*far_light.diffuse, unit_normal, light_dir);
+    vec3 dc = diffuse_color(planar_light.intensity*planar_light.diffuse, unit_normal, light_dir);
 
-    vec3 ambient_color = vec3(texture(material.diffuse, tex_coord)) * far_light.ambient;
+    vec3 ambient_color = vec3(texture(material.diffuse, tex_coord)) * planar_light.ambient;
 
     vec3 reflected_color = sc + dc + ambient_color;
 
@@ -133,8 +134,11 @@ void main()
 
     vec3 unit_normal = normalize(normal);
 
-    vec3 local_color = local_light_illumination(unit_normal);
-    vec3 far_color = far_light_illumination(unit_normal);
+    vec3 point_color = vec3(0.);
+    for (int i=0; i<POINT_LIGHT_COUNT; i++) {
+		point_color += point_light_illumination(unit_normal, point_lights[i]);
+	};
+    vec3 planar_color = planar_light_illumination(unit_normal);
     vec3 flash_color = flashlight_illumination(unit_normal);
-    FragColor = vec4(local_color + far_color + flash_color, 1.0);
+    FragColor = vec4(point_color + planar_color + flash_color, 1.0);
 }
