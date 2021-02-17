@@ -113,7 +113,7 @@ vec3 flashlight_illumination(vec3 unit_normal) {
 
     float costheta = dot(normalize(flashlight.direction), light_dir);
 
-    vec3 color_intensity = flashlight.intensity * flashlight.color;
+    vec3 color_intensity = (flashlight.intensity / dot(light_to_world, light_to_world)) * flashlight.color;
 
     vec3 ac = vec3(texture(material.diffuse, tex_coord)) * color_intensity * 0.;
 
@@ -124,7 +124,6 @@ vec3 flashlight_illumination(vec3 unit_normal) {
     vec3 sc = specular_color(color_intensity, unit_normal, -light_dir);
 
     vec3 dc = diffuse_color(color_intensity, unit_normal, -light_dir);
-
 
     return sc + ac + dc;
 }

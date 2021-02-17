@@ -309,9 +309,11 @@ int main(int argc, char** argv)
 	glm::vec3 color_axis_0 = glm::vec3(-1.f, -1.f, 1.f) * (1.f / sqrt(3.f));
 	glm::vec3 color_axis_1 = glm::cross(light_color_0, color_axis_0);
 
+	constexpr float steradians = 4.f * glm::pi<float>();
+
 	glm::vec3 sunlight_color = glm::vec3(1.f, 1.f, 0.98f);
-	glm::vec3 sunlight_ambient = 0.2f * sunlight_color;
-	glm::vec3 sunlight_diffuse = 0.5f * sunlight_color;
+	glm::vec3 sunlight_ambient = 0.1f * sunlight_color;
+	glm::vec3 sunlight_diffuse = (1.f/steradians) * sunlight_color;
 	glm::vec3 sunlight_specular = sunlight_color;
 	glm::vec3 sunlight_dir = glm::normalize(glm::vec3(0.1f, 1.f, 0.2f));
 
@@ -337,10 +339,10 @@ int main(int argc, char** argv)
 
 		point_light_str[plstr_i_idx] = '0' + i;
 
-		ourShader.setVec3(point_light_str + ".ambient", 0.1f, 0.1f, 0.1f);
-		ourShader.setVec3(point_light_str + ".diffuse", 0.5f, 0.5f, 0.5f);
+		ourShader.setVec3(point_light_str + ".ambient", 0.01f, 0.01f, 0.01f);
+		ourShader.setVec3(point_light_str + ".diffuse", 1.f/steradians, 1.f/steradians, 1.f/steradians);
 		ourShader.setVec3(point_light_str + ".specular", 1.0f, 1.0f, 1.0f);
-		ourShader.setFloat(point_light_str + ".intensity", 10.f);
+		ourShader.setFloat(point_light_str + ".intensity", 40.f);
 	}
 
 	ourShader.setVec3("planar_light.direction", &sunlight_dir);
