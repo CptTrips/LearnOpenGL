@@ -100,14 +100,12 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 	return Mesh(vertices, indices, textures);
 }
 
-unsigned int texture_from_file(const char* filename, string directory)
+unsigned int texture_from_file(const char* path)
 {
 	int width, height, nrChannels;
 
 	unsigned int texture_id;
 	glGenTextures(1, &texture_id);
-
-	string path = directory + filename;
 
 	/*
 	glActiveTexture(GL_TEXTURE0);
@@ -117,7 +115,7 @@ unsigned int texture_from_file(const char* filename, string directory)
 	*/
 
 	//stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
 
 	if (data) {
 		// GL_RGB for jpg, GL_RGBA for png
@@ -141,11 +139,30 @@ vector<Texture> Model::load_material_textures(aiMaterial* mat, aiTextureType typ
 	{
 		aiString str;
 		mat->GetTexture(type, i, &str);
-		Texture texture;
-		texture.id = texture_from_file(str.C_Str(), directory);
-		texture.type = type_name;
-		//texture.path = str;
-		textures.push_back(texture);
+		string path = directory + str.C_Str();
+
+		bool skip = false;
+		for (unsigned int j = 0; j < loaded_textures.size(); j++)
+		{
+			// if texture has alreay been loaded
+			if (std::strcmp(loaded_textures[j].path.c_str(), path.c_str()) == 0)
+			{
+				textures.push_back(loaded_textures[j]);
+				skip = true;
+				break;
+			}
+		}
+		if (!skip)
+		{
+			Texture texture;
+			texture.id = texture_from_file(path.c_str());
+			texture.type = type_name;
+			texture.path = path;
+			textures.push_back(texture);
+			loaded_textures.push_back(texture);
+		}
 	}
+
+	return textures;
 }
 

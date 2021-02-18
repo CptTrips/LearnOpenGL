@@ -16,6 +16,8 @@
 using std::vector; using std::string;
 using std::cout; using std::endl;
 
+vector<Texture> loaded_textures;
+
 class Model
 {
 public:

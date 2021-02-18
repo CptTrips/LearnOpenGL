@@ -20,6 +20,7 @@ struct Vertex {
 struct Texture {
 	unsigned int id;
 	string type; // "diffuse", "specular", "emissive"
+	string path; // for checking if we've already loaded
 };
 
 class Mesh
