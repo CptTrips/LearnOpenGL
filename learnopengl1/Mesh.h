@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/ext.hpp>
+#include "Shader.h"
 
 using std::string;
 using std::vector;
@@ -13,7 +14,7 @@ using std::vector;
 struct Vertex {
 	glm::vec3 position;
 	glm::vec3 normal;
-	glm::vec3 tex_coord;
+	glm::vec2 tex_coord;
 };
 
 struct Texture {

@@ -1,12 +1,8 @@
 #include "Mesh.h"
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include "Shader.h"
-#include <vector>
-#include <string>
+/*
 using std::vector;
 using std::string;
+*/
 
 Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
 {
