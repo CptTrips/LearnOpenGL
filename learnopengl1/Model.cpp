@@ -52,11 +52,11 @@ glm::vec3& v3_assimp_to_glm(const aiVector3D& v_in) {
 	return v_out;
 }
 
-glm::vec2& v2_assimp_to_glm(const aiVector2D& v_in) {
+glm::vec2& v2_assimp_to_glm(const aiVector3D& v_in) {
 
 	glm::vec2 v_out;
-	v_out.x = (float)v_in.x;
-	v_out.y = (float)v_in.y;
+	v_out.x = v_in.x;
+	v_out.y = v_in.y;
 
 	return v_out;
 }
@@ -67,6 +67,7 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 	vector<unsigned int> indices;
 	vector<Texture> textures;
 
+	// Vertices
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
 		Vertex vertex;
@@ -74,16 +75,18 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 		vertex.position = v3_assimp_to_glm(mesh->mVertices[i]);
 		vertex.normal = v3_assimp_to_glm(mesh->mNormals[i]);
 
-		vertices.push_back(vertex);
-
-		if (mesh->mMaterialIndex >= 0)
+		if (mesh->mTextureCoords[0])
 		{
-			vertex.tex_coord = glm::vec2(v3_assimp_to_glm(mesh->mTextureCoords[0][i]));
+			vertex.tex_coord = v2_assimp_to_glm(mesh->mTextureCoords[0][i]);
 		}
 		else
 			vertex.tex_coord = glm::vec2(0.f);
+
+		vertices.push_back(vertex);
+
 	}
 
+	// Faces/Indices
 	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
 	{
 		aiFace face = mesh->mFaces[i];
@@ -117,27 +120,29 @@ unsigned int Model::texture_from_file(const char* path)
 	unsigned int texture_id;
 	glGenTextures(1, &texture_id);
 
-	int texture_count = loaded_textures.size();
-
-	//glActiveTexture(GL_TEXTURE0 + texture_count);
-	//glBindTexture(GL_TEXTURE_2D, texture_id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
 	cout << "loading texture " << path << endl;
 	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
 
 	if (data) {
 		// GL_RGB for jpg, GL_RGBA for png
-		unsigned int channel_type = 0;
+		GLenum channel_type = GL_RGB;
 		if (nrChannels == 3)
 			channel_type = GL_RGB;
 		else if (nrChannels == 4)
 			channel_type = GL_RGBA;
+		else if (nrChannels == 1)
+			channel_type = GL_RED;
+
+		glBindTexture(GL_TEXTURE_2D, texture_id);
 		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
 			channel_type, width, height, 0, channel_type, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 	else {
 		std::cout << "Failed to load texture" << std::endl;

@@ -11,8 +11,8 @@ struct Material {
     float shininess;
 };
 
-uniform Material material;
-#define MAX_TEXTURE 99
+//uniform Material material;
+#define MAX_TEXTURE 128
 uniform Material materials[MAX_TEXTURE];
 
 struct PointLight {
@@ -48,7 +48,7 @@ uniform Flashlight flashlight;
 
 uniform vec3 view_pos;
 
-vec3 specular_color(vec3 incident_intensity, vec3 unit_normal, vec3 light_dir)
+vec3 specular_color(Material material, vec3 incident_intensity, vec3 unit_normal, vec3 light_dir)
 {
 
     vec3 view_dir = normalize(view_pos - world_pos);
@@ -60,7 +60,7 @@ vec3 specular_color(vec3 incident_intensity, vec3 unit_normal, vec3 light_dir)
     return specular_color;
 }
 
-vec3 diffuse_color(vec3 incident_intensity, vec3 unit_normal, vec3 light_dir)
+vec3 diffuse_color(Material material, vec3 incident_intensity, vec3 unit_normal, vec3 light_dir)
 {
 
     vec3 diffuse_intensity = max(dot(unit_normal, light_dir), 0.) * incident_intensity;
@@ -75,13 +75,13 @@ vec3 point_light_illumination(vec3 unit_normal, PointLight point_light) {
     vec3 light_dir = normalize(light_to_world);
     float incident_intensity = point_light.intensity / dot(light_to_world, light_to_world);
 
-    vec3 sc = specular_color(incident_intensity*point_light.specular, unit_normal, light_dir);
+    vec3 sc = specular_color(materials[0], incident_intensity*point_light.specular, unit_normal, light_dir);
 
     //diffuse
-    vec3 dc = diffuse_color(incident_intensity * point_light.diffuse, unit_normal, light_dir);
+    vec3 dc = diffuse_color(materials[0], incident_intensity * point_light.diffuse, unit_normal, light_dir);
 
     //ambient
-    vec3 ambient_color = vec3(texture(material.diffuse, tex_coord)) * point_light.ambient;
+    vec3 ambient_color = vec3(texture(materials[0].diffuse, tex_coord)) * point_light.ambient;
 
     //emissive
     vec3 emissive_color = vec3(0.);//vec3(texture(material.emissive, tex_coord));
@@ -96,11 +96,11 @@ vec3 planar_light_illumination(vec3 unit_normal) {
 
     vec3 light_dir = normalize(planar_light.direction);
 
-    vec3 sc = specular_color(planar_light.intensity*planar_light.specular, unit_normal, light_dir);
+    vec3 sc = specular_color(materials[0], planar_light.intensity*planar_light.specular, unit_normal, light_dir);
 
-    vec3 dc = diffuse_color(planar_light.intensity*planar_light.diffuse, unit_normal, light_dir);
+    vec3 dc = diffuse_color(materials[0], planar_light.intensity*planar_light.diffuse, unit_normal, light_dir);
 
-    vec3 ambient_color = vec3(texture(material.diffuse, tex_coord)) * planar_light.ambient;
+    vec3 ambient_color = vec3(texture(materials[0].diffuse, tex_coord)) * planar_light.ambient;
 
     vec3 reflected_color = sc + dc + ambient_color;
 
@@ -117,31 +117,31 @@ vec3 flashlight_illumination(vec3 unit_normal) {
 
     vec3 color_intensity = (flashlight.intensity / dot(light_to_world, light_to_world)) * flashlight.color;
 
-    vec3 ac = vec3(texture(material.diffuse, tex_coord)) * color_intensity * 0.;
+    vec3 ac = vec3(texture(materials[0].diffuse, tex_coord)) * color_intensity * 0.;
 
     if (costheta < 0.98) {
 		return ac;
 	}
     
-    vec3 sc = specular_color(color_intensity, unit_normal, -light_dir);
+    vec3 sc = specular_color(materials[0], color_intensity, unit_normal, -light_dir);
 
-    vec3 dc = diffuse_color(color_intensity, unit_normal, -light_dir);
+    vec3 dc = diffuse_color(materials[0], color_intensity, unit_normal, -light_dir);
 
     return sc + ac + dc;
 }
 
 void main()
 {
-    /*
     vec3 unit_normal = normalize(normal);
 
     vec3 point_color = vec3(0.);
+    /*
     for (int i=0; i<POINT_LIGHT_COUNT; i++) {
 		point_color += point_light_illumination(unit_normal, point_lights[i]);
 	};
-    vec3 planar_color = planar_light_illumination(unit_normal);
-    vec3 flash_color = flashlight_illumination(unit_normal);
     */
-    vec3 dc = vec3(texture(materials[0].diffuse, tex_coord));
-    FragColor = vec4(dc, 1.0);
+    vec3 planar_color = planar_light_illumination(unit_normal);
+    //vec3 flash_color = flashlight_illumination(unit_normal);
+
+    FragColor = vec4(planar_color, 1.0);
 }

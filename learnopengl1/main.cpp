@@ -167,10 +167,10 @@ int main(int argc, char** argv)
 	constexpr float steradians = 4.f * glm::pi<float>();
 
 	glm::vec3 sunlight_color = glm::vec3(1.f, 1.f, 0.98f);
-	glm::vec3 sunlight_ambient = 0.1f * sunlight_color;
+	glm::vec3 sunlight_ambient = 0.15f*glm::vec3(0.5f, .8f, 0.92f);
 	glm::vec3 sunlight_diffuse = (1.f/steradians) * sunlight_color;
 	glm::vec3 sunlight_specular = sunlight_color;
-	glm::vec3 sunlight_dir = glm::normalize(glm::vec3(0.1f, 1.f, 0.2f));
+	glm::vec3 sunlight_dir = glm::normalize(glm::vec3(0.5f, 1.f, 0.5f));
 
 	glm::vec4 flashlight_offset_viewspace = glm::vec4(0.f);// -0.1f, 0.f, 0.1f, 1.f);;
 	glm::vec3 flashlight_offset;
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
 	ourShader.setVec3("planar_light.ambient", &sunlight_ambient);
 	ourShader.setVec3("planar_light.diffuse", &sunlight_diffuse);
 	ourShader.setVec3("planar_light.specular", &sunlight_specular);
-	ourShader.setFloat("planar_light.intensity", 5.f);
+	ourShader.setFloat("planar_light.intensity", 40.f);
 
 	ourShader.setVec3("flashlight.color", 1.0f, 1.0f, 1.0f);
 	ourShader.setFloat("flashlight.intensity", 2.f);
@@ -260,13 +260,11 @@ int main(int argc, char** argv)
 			ourShader.setVec3(point_light_str + ".position", &light_positions[i]);
 		}
 
-
 		// Flashlight
 		ourShader.use();
 		flashlight_offset = glm::vec3(glm::inverse(view) * flashlight_offset_viewspace);
 		ourShader.setVec3("flashlight.offset", &flashlight_offset);
 		ourShader.setVec3("flashlight.direction", cam_fwd.x, cam_fwd.y, cam_fwd.z);
-
 
 		guitar_pack.draw(ourShader);
 
