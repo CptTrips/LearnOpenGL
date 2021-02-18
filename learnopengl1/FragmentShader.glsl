@@ -12,6 +12,8 @@ struct Material {
 };
 
 uniform Material material;
+#define MAX_TEXTURE 99
+uniform Material materials[MAX_TEXTURE];
 
 struct PointLight {
     vec3 position;
@@ -130,7 +132,7 @@ vec3 flashlight_illumination(vec3 unit_normal) {
 
 void main()
 {
-
+    /*
     vec3 unit_normal = normalize(normal);
 
     vec3 point_color = vec3(0.);
@@ -139,5 +141,7 @@ void main()
 	};
     vec3 planar_color = planar_light_illumination(unit_normal);
     vec3 flash_color = flashlight_illumination(unit_normal);
-    FragColor = vec4(point_color + planar_color + flash_color, 1.0);
+    */
+    vec3 dc = vec3(texture(materials[0].diffuse, tex_coord));
+    FragColor = vec4(dc, 1.0);
 }

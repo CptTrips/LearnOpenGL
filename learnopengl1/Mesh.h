@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
@@ -10,6 +11,8 @@
 
 using std::string;
 using std::vector;
+using std::cout;
+using std::endl;
 
 struct Vertex {
 	glm::vec3 position;

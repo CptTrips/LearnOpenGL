@@ -9,6 +9,7 @@ void Model::draw(Shader& shader)
 
 void Model::load_model(string path)
 {
+	cout << "loading model " << path << endl;
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
@@ -18,21 +19,25 @@ void Model::load_model(string path)
 		return;
 	}
 
-	directory = path.substr(0, path.find_last_of('/'));
+	directory = path.substr(0, path.find_last_of('\\'));
 
 	process_node(scene->mRootNode, scene);
 }
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
+	cout << "node found" << endl;
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
+		cout << "processing mesh " << i << " of " << node->mNumMeshes << endl;
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		meshes.push_back(process_mesh(mesh, scene));
 	}
 
+	cout << "node has " << node->mNumChildren << " children" << endl;
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
+		cout << "child " << i << " of " << node->mNumChildren << endl;
 		process_node(node->mChildren[i], scene);
 	}
 }
@@ -82,9 +87,12 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
 	{
 		aiFace face = mesh->mFaces[i];
-		for (unsigned int j = 0; j < mesh->mNumFaces; j++)
+		for (unsigned int j = 0; j < face.mNumIndices; j++)
 			indices.push_back(face.mIndices[j]);
 	}
+
+	cout << "mesh has " << mesh->mNumVertices << " vertices "
+		<< mesh->mNumFaces << " faces" << endl;
 
 	if (mesh->mMaterialIndex >= 0)
 	{
@@ -95,32 +103,40 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
 		vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR, "specular");
 		textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
+
+		cout << "mesh material " << material << endl;
 	}
 
 	return Mesh(vertices, indices, textures);
 }
 
-unsigned int texture_from_file(const char* path)
+unsigned int Model::texture_from_file(const char* path)
 {
 	int width, height, nrChannels;
 
 	unsigned int texture_id;
 	glGenTextures(1, &texture_id);
 
-	/*
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, diffuse_map);
+	int texture_count = loaded_textures.size();
+
+	//glActiveTexture(GL_TEXTURE0 + texture_count);
+	//glBindTexture(GL_TEXTURE_2D, texture_id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	*/
 
-	//stbi_set_flip_vertically_on_load(true);
+	cout << "loading texture " << path << endl;
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
 
 	if (data) {
 		// GL_RGB for jpg, GL_RGBA for png
+		unsigned int channel_type = 0;
+		if (nrChannels == 3)
+			channel_type = GL_RGB;
+		else if (nrChannels == 4)
+			channel_type = GL_RGBA;
 		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
-			GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			channel_type, width, height, 0, channel_type, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else {
@@ -128,6 +144,7 @@ unsigned int texture_from_file(const char* path)
 	}
 
 	stbi_image_free(data);
+
 	return texture_id;
 }
 
@@ -139,7 +156,7 @@ vector<Texture> Model::load_material_textures(aiMaterial* mat, aiTextureType typ
 	{
 		aiString str;
 		mat->GetTexture(type, i, &str);
-		string path = directory + str.C_Str();
+		string path = directory + '\\' + str.C_Str();
 
 		bool skip = false;
 		for (unsigned int j = 0; j < loaded_textures.size(); j++)
@@ -152,6 +169,7 @@ vector<Texture> Model::load_material_textures(aiMaterial* mat, aiTextureType typ
 				break;
 			}
 		}
+
 		if (!skip)
 		{
 			Texture texture;

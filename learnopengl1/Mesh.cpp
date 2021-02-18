@@ -46,8 +46,8 @@ void Mesh::setup_mesh()
 
 void Mesh::draw(Shader& shader)
 {
-	unsigned int diffuse_tex_count = 1;
-	unsigned int specular_tex_count = 1;
+	unsigned int diffuse_tex_count = 0;
+	unsigned int specular_tex_count = 0;
 
 	/* I think the way I want this to work is that a texture implicitly has a 
 	diffuse specular and emissive component. The shader accepts an array of 
@@ -55,6 +55,7 @@ void Mesh::draw(Shader& shader)
 	glGenTexture(3, [name])*/
 	for (unsigned int i = 0; i < textures.size(); i++)
 	{
+		// Shouldn't we find the index of the texture in the loaded_textures? Do we have access to that here?
 		glActiveTexture(GL_TEXTURE0 + i);
 
 		string number;
@@ -62,11 +63,13 @@ void Mesh::draw(Shader& shader)
 		if (name == "diffuse") number = std::to_string(diffuse_tex_count++);
 		else if (name == "specular") number = std::to_string(specular_tex_count++);
 
-		char* shader_var = ("material.texture_" + name + number).c_str();
-		shader.setFloat(shader_var, i);
+		string shader_var = "materials[" + number + "]." + name;
+		shader.setInt(shader_var.c_str(), i);
 
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}
+
+	glActiveTexture(GL_TEXTURE0);
 
 	// Draw call
 	glBindVertexArray(VAO);

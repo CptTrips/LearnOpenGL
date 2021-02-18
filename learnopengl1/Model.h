@@ -16,18 +16,17 @@
 using std::vector; using std::string;
 using std::cout; using std::endl;
 
-vector<Texture> loaded_textures;
-
 class Model
 {
 public:
-	Model(char* path)
+	Model(const char* path)
 	{
 		load_model(path);
 	}
 	void draw(Shader& shader);
 
 private:
+	vector<Texture> loaded_textures;
 	vector<Mesh> meshes;
 	string directory;
 
@@ -36,5 +35,6 @@ private:
 	Mesh process_mesh(aiMesh* mesh, const aiScene* scene);
 	vector<Texture> load_material_textures(aiMaterial* mat, aiTextureType type,
 		string type_name);
+	unsigned int texture_from_file(const char* path);
 };
 
