@@ -86,7 +86,66 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 			indices.push_back(face.mIndices[j]);
 	}
 
+	if (mesh->mMaterialIndex >= 0)
+	{
+		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+		vector<Texture> diffuse_maps = load_material_textures(material, aiTextureType_DIFFUSE, "diffuse");
+		textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
+
+		vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR, "specular");
+		textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
+	}
+
 	return Mesh(vertices, indices, textures);
 }
 
+unsigned int texture_from_file(const char* filename, string directory)
+{
+	int width, height, nrChannels;
+
+	unsigned int texture_id;
+	glGenTextures(1, &texture_id);
+
+	string path = directory + filename;
+
+	/*
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, diffuse_map);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	*/
+
+	//stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+
+	if (data) {
+		// GL_RGB for jpg, GL_RGBA for png
+		glTexImage2D(GL_TEXTURE_2D, 0, //mipmap level
+			GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+
+	stbi_image_free(data);
+	return texture_id;
+}
+
+vector<Texture> Model::load_material_textures(aiMaterial* mat, aiTextureType type, string type_name)
+{
+	vector<Texture> textures;
+
+	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+	{
+		aiString str;
+		mat->GetTexture(type, i, &str);
+		Texture texture;
+		texture.id = texture_from_file(str.C_Str(), directory);
+		texture.type = type_name;
+		//texture.path = str;
+		textures.push_back(texture);
+	}
+}
 
