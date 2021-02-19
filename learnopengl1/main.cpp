@@ -57,18 +57,22 @@ void processInput(GLFWwindow* window, Shader* s)
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		cam_pos += cam_ds * cam_fwd;
+		//cout << glm::to_string(cam_pos) << endl;
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
 		cam_pos += glm::normalize(glm::cross(cam_up, cam_fwd)) * cam_ds;
+		//cout << glm::to_string(cam_pos) << endl;
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
 		cam_pos -= glm::normalize(glm::cross(cam_up, cam_fwd)) * cam_ds;
+		//cout << glm::to_string(cam_pos) << endl;
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
 		cam_pos -= cam_ds * cam_fwd;
+		//cout << glm::to_string(cam_pos) << endl;
 	}
  }
 
@@ -153,14 +157,15 @@ int main(int argc, char** argv)
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 	
 	glm::vec3 light_positions[] = {
-		glm::vec3(0.7f, 0.2f, 2.0f),
-		glm::vec3(2.3f, -3.3f, -4.0f),
-		glm::vec3(-4.0f, 2.0f, -12.0f),
-		glm::vec3(0.0f, 0.0f, -3.0f)
+		glm::vec3(1.f, -0.3f, 10.f),
+		100.f*glm::vec3(2.3f, -3.3f, -4.0f),
+		100.f*glm::vec3(-4.0f, 2.0f, -12.0f),
+		100.f*glm::vec3(0.0f, 0.0f, -3.0f)
 	};
 
 	glm::vec3 light_color_0 = glm::vec3(1.f, 1.f, 1.f) * (1.f / sqrt(3.f));
-	glm::vec3 light_color;
+	glm::vec3 light_color = glm::vec3(1.f, .2f, 0.f);;
+	// For a light which changes color at constant lightness
 	glm::vec3 color_axis_0 = glm::vec3(-1.f, -1.f, 1.f) * (1.f / sqrt(3.f));
 	glm::vec3 color_axis_1 = glm::cross(light_color_0, color_axis_0);
 
@@ -189,17 +194,20 @@ int main(int argc, char** argv)
 
 		point_light_str[plstr_i_idx] = '0' + i;
 
-		ourShader.setVec3(point_light_str + ".ambient", 0.01f, 0.01f, 0.01f);
-		ourShader.setVec3(point_light_str + ".diffuse", 1.f/steradians, 1.f/steradians, 1.f/steradians);
-		ourShader.setVec3(point_light_str + ".specular", 1.0f, 1.0f, 1.0f);
+		glm::vec3 light_color_diffuse = 1.f / steradians * light_color;
+
+		ourShader.setVec3(point_light_str + ".ambient", 0.f, 0.f, 0.f);
+		ourShader.setVec3(point_light_str + ".diffuse", &light_color_diffuse);
+		ourShader.setVec3(point_light_str + ".specular", &light_color);
 		ourShader.setFloat(point_light_str + ".intensity", 40.f);
+		ourShader.setVec3(point_light_str + ".position", &light_positions[i]);
 	}
 
 	ourShader.setVec3("planar_light.direction", &sunlight_dir);
 	ourShader.setVec3("planar_light.ambient", &sunlight_ambient);
 	ourShader.setVec3("planar_light.diffuse", &sunlight_diffuse);
 	ourShader.setVec3("planar_light.specular", &sunlight_specular);
-	ourShader.setFloat("planar_light.intensity", 40.f);
+	ourShader.setFloat("planar_light.intensity", 10.f);
 
 	ourShader.setVec3("flashlight.color", 1.0f, 1.0f, 1.0f);
 	ourShader.setFloat("flashlight.intensity", 2.f);
@@ -227,11 +235,12 @@ int main(int argc, char** argv)
 		dt = new_t - t;
 		t = new_t;
 
+		cout << "frametime " << dt << endl;
+
 		// Changing light color
-		light_color = light_color_0 * sqrt(3.f);//+ sin(2.f *t) * color_axis_0 + cos(2.f * t) * color_axis_1;
+		//light_color = light_color_0 + sin(2.f *t) * color_axis_0 + cos(2.f * t) * color_axis_1;
 
 		/*
-
 		glm::vec3 light_ambient = 0.2f * light_color;
 		glm::vec3 light_diffuse = 0.5f * light_color;
 		glm::vec3 light_specular = 1.f * light_color;
@@ -241,7 +250,7 @@ int main(int argc, char** argv)
 		*/
 		//light_pos = light_pos_0 + (float)sin(3. * t) * glm::vec3(0., 0., 1.);
 
-		glClearColor(0.1f * light_color.x, 0.1f * light_color.y, 0.1f * light_color.z, 1.0f);
+		glClearColor(0.01f, 0.02f, 0.f, 1.0f);
 
 		// Co-ordinate systems
 		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
@@ -251,6 +260,7 @@ int main(int argc, char** argv)
 		ourShader.setMat4("view", &view);
 		ourShader.setVec3("view_pos", &cam_pos);
 
+		/*
 		for (int i = 0; i < point_light_count; i++) {
 
 			point_light_str[plstr_i_idx] = '0' + i;
@@ -259,6 +269,7 @@ int main(int argc, char** argv)
 			ourShader.use();
 			ourShader.setVec3(point_light_str + ".position", &light_positions[i]);
 		}
+		*/
 
 		// Flashlight
 		ourShader.use();

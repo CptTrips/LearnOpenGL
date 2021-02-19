@@ -23,7 +23,7 @@ struct PointLight {
     float intensity;
 };
 
-#define POINT_LIGHT_COUNT 4
+#define POINT_LIGHT_COUNT 16
 uniform PointLight point_lights[POINT_LIGHT_COUNT];
 
 
@@ -134,14 +134,21 @@ void main()
 {
     vec3 unit_normal = normalize(normal);
 
-    vec3 point_color = vec3(0.);
-    /*
-    for (int i=0; i<POINT_LIGHT_COUNT; i++) {
-		point_color += point_light_illumination(unit_normal, point_lights[i]);
-	};
-    */
     vec3 planar_color = planar_light_illumination(unit_normal);
+
+    vec3 point_color = vec3(0.);
+    for (int i=0; i<POINT_LIGHT_COUNT; i++)
+    {
+		point_color += point_light_illumination(unit_normal, point_lights[i]);
+    }
+
     //vec3 flash_color = flashlight_illumination(unit_normal);
 
-    FragColor = vec4(planar_color, 1.0);
+    //FragColor = vec4(planar_color + point_color, 1.0);
+    float depth_val = gl_FragCoord.z;
+
+    float true_depth = 1./(depth_val * (1./100. - 1./.1) + 1./.1) / 100.;
+
+    FragColor = vec4(vec3(true_depth), 1.0);
+
 }
