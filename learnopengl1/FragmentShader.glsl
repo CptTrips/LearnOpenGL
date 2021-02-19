@@ -144,11 +144,6 @@ void main()
 
     //vec3 flash_color = flashlight_illumination(unit_normal);
 
-    //FragColor = vec4(planar_color + point_color, 1.0);
-    float depth_val = gl_FragCoord.z;
-
-    float true_depth = 1./(depth_val * (1./100. - 1./.1) + 1./.1) / 100.;
-
-    FragColor = vec4(vec3(true_depth), 1.0);
+    FragColor = vec4(planar_color + point_color, 1.0);
 
 }

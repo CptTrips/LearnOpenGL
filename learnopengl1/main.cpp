@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 
 	// Load shaders
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
-	Shader light_source_shader("light_source_v.glsl", "light_source_f.glsl");
+	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
 
 	// Load model
 	string guitar_pack_path = "C:\\Users\\sodai\\Documents\\projects\\TripsLearnOpenGL\\learnopengl1\\models\\backpack.obj";
@@ -212,10 +212,6 @@ int main(int argc, char** argv)
 	ourShader.setVec3("flashlight.color", 1.0f, 1.0f, 1.0f);
 	ourShader.setFloat("flashlight.intensity", 2.f);
 
-	light_source_shader.use();
-	light_source_shader.setMat4("projection", &projection);
-	light_source_shader.setVec3("light_color", &light_color_0);
-
 	// Background color
 	glClearColor(0.1f*light_color_0.x, 0.1f*light_color_0.y, 0.1f*light_color_0.z, 1.0f);
 
@@ -232,7 +228,6 @@ int main(int argc, char** argv)
 		processInput(window, &ourShader);
 
 		// Rendering
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		float new_t = glfwGetTime();
 		dt = new_t - t;
@@ -280,7 +275,29 @@ int main(int argc, char** argv)
 		ourShader.setVec3("flashlight.offset", &flashlight_offset);
 		ourShader.setVec3("flashlight.direction", cam_fwd.x, cam_fwd.y, cam_fwd.z);
 
+		glEnable(GL_DEPTH_TEST);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
+
 		guitar_pack.draw(ourShader);
+
+		// Highlight
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glStencilMask(0x00); // don't write to the stencil buffer. can't we just stencil op with three keeps?
+		glDisable(GL_DEPTH_TEST);
+
+		highlight_shader.use();
+		highlight_shader.setMat4("model", &model);
+		highlight_shader.setMat4("view", &view);
+		highlight_shader.setMat4("projection", &projection);
+		
+		guitar_pack.draw(highlight_shader);
+
+		glStencilMask(0xFF); // Actually need this for glClear to work!
 
 		// Check and call events and swap buffers
 		glfwSwapBuffers(window);
