@@ -222,6 +222,9 @@ int main(int argc, char** argv)
 	// Enable z-buffer depth test
 	glEnable(GL_DEPTH_TEST);
 
+	// Enable stencil buffer
+	glEnable(GL_STENCIL_TEST);
+
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -229,7 +232,7 @@ int main(int argc, char** argv)
 		processInput(window, &ourShader);
 
 		// Rendering
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		float new_t = glfwGetTime();
 		dt = new_t - t;
