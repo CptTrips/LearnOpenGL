@@ -17,10 +17,11 @@
 #include "Model.h"
 #include "Mesh.h"
 
+constexpr float steradians = 4.f * glm::pi<float>();
 
 const float radius = 10.f;
-glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, -radius);
-glm::vec3 cam_fwd = glm::vec3(0.0f, 0.0f, 1.0f);
+glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, radius);
+glm::vec3 cam_fwd = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 float t = 0.f;
@@ -102,6 +103,56 @@ void mouse_callback(GLFWwindow* window, double x, double y)
 	cam_fwd = glm::vec3(-sin(phi) * sin(theta), cos(theta), cos(phi) * sin(theta));
 }
 
+
+struct PointLight
+{
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	glm::vec3 position;
+	float intensity;
+};
+
+struct PlanarLight
+{
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	glm::vec3 direction;
+	float intensity;
+};
+
+struct FlashLight
+{
+	glm::vec3 color;
+	glm::vec3 offset;
+	float intensity;
+};
+
+void pass_lights_to_shader(Shader &s, PointLight p, PlanarLight pl, FlashLight f)
+{
+	s.use();
+
+	std::string point_light_str = "point_lights[i]";
+	int plstr_i_idx = point_light_str.find('[') + 1;
+	point_light_str[plstr_i_idx] = '0';// + i;
+
+	s.setVec3(point_light_str + ".ambient", &p.ambient);
+	s.setVec3(point_light_str + ".diffuse", &p.diffuse);
+	s.setVec3(point_light_str + ".specular", &p.specular);
+	s.setFloat(point_light_str + ".intensity", p.intensity);
+	s.setVec3(point_light_str + ".position", &p.position);
+
+	s.setVec3("planar_light.direction", &pl.direction);
+	s.setVec3("planar_light.ambient", &pl.ambient);
+	s.setVec3("planar_light.diffuse", &pl.diffuse);
+	s.setVec3("planar_light.specular", &pl.specular);
+	s.setFloat("planar_light.intensity", pl.intensity);
+
+	s.setVec3("flashlight.color", &f.color);
+	s.setFloat("flashlight.intensity", f.intensity);
+}
+
 int main(int argc, char** argv)
 {
 	// Initialize GLFW
@@ -140,9 +191,15 @@ int main(int argc, char** argv)
 	// Load shaders
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
 	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
+	Shader ground_shader("ground_v.glsl", "ground_f.glsl");
 
 	// Load model
-	string guitar_pack_path = "C:\\Users\\sodai\\Documents\\projects\\TripsLearnOpenGL\\learnopengl1\\models\\backpack.obj";
+	string models_folder = "C:\\Users\\sodai\\Documents\\projects\\TripsLearnOpenGL\\learnopengl1\\models\\";
+
+	string ground_square_path = models_folder + "square\\square.obj";
+	Model ground = Model(ground_square_path.c_str());
+
+	string guitar_pack_path = models_folder + "backpack\\backpack.obj";
 	Model guitar_pack = Model(guitar_pack_path.c_str());
 
 	// Wireframe mode
@@ -150,70 +207,67 @@ int main(int argc, char** argv)
 
 	// 3D Transformations
 	glm::mat4 model = glm::mat4(1.0f); // model transform
+	glm::mat4 ground_model = glm::mat4(1.0f);
+	ground_model = glm::translate(ground_model, glm::vec3(0., -1.7, 0.));
+	ground_model = glm::rotate(ground_model, -glm::radians(90.f), glm::vec3(1., 0., 0.));
+	ground_model = glm::scale(ground_model, glm::vec3(100., 100., 100.));
+	ground_model = glm::translate(ground_model, glm::vec3(-.5, -.5, 0.));
 
 	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
 	
 	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 	
-	glm::vec3 light_positions[] = {
-		glm::vec3(1.f, -0.3f, 10.f),
-		100.f*glm::vec3(2.3f, -3.3f, -4.0f),
-		100.f*glm::vec3(-4.0f, 2.0f, -12.0f),
-		100.f*glm::vec3(0.0f, 0.0f, -3.0f)
-	};
 
-	glm::vec3 light_color_0 = glm::vec3(1.f, 1.f, 1.f) * (1.f / sqrt(3.f));
+	glm::vec3 ground_color = glm::vec3(.3, .12, 0.);
+
+	glm::vec3 ambient_color = 0.25f*glm::vec3(0.1f, 0.2f, .05f);
+
+	PointLight p;
 	glm::vec3 light_color = glm::vec3(1.f, .2f, 0.f);;
-	// For a light which changes color at constant lightness
-	glm::vec3 color_axis_0 = glm::vec3(-1.f, -1.f, 1.f) * (1.f / sqrt(3.f));
-	glm::vec3 color_axis_1 = glm::cross(light_color_0, color_axis_0);
+	p.specular = light_color;
+	p.diffuse = light_color / steradians;
+	p.ambient = glm::vec3(0.f);
+	p.intensity = 100.f;
+	p.position = glm::vec3(1.f, -1.3f, 5.f);
 
-	constexpr float steradians = 4.f * glm::pi<float>();
 
+	PlanarLight pl;
 	glm::vec3 sunlight_color = glm::vec3(1.f, 1.f, 0.98f);
-	glm::vec3 sunlight_ambient = 0.15f*glm::vec3(0.5f, .8f, 0.92f);
-	glm::vec3 sunlight_diffuse = (1.f/steradians) * sunlight_color;
-	glm::vec3 sunlight_specular = sunlight_color;
-	glm::vec3 sunlight_dir = glm::normalize(glm::vec3(0.5f, 1.f, 0.5f));
+	pl.ambient = 0.15f*glm::vec3(0.5f, .8f, 0.92f);
+	pl.diffuse = (1.f/steradians) * sunlight_color;
+	pl.specular = sunlight_color;
+	pl.intensity = 4.f;
+	pl.direction = glm::normalize(glm::vec3(0.5f, 1.f, 0.5f));
 
+	FlashLight f;
+	f.color = glm::vec3(1.f);
+	f.intensity = 10.f;
 	glm::vec4 flashlight_offset_viewspace = glm::vec4(0.f);// -0.1f, 0.f, 0.1f, 1.f);;
 	glm::vec3 flashlight_offset;
 
 	// Assign uniforms
 	ourShader.use();
-
 	ourShader.setMat4("model", &model);
 	ourShader.setMat4("view", &view);
 	ourShader.setMat4("projection", &projection);
 
-	int point_light_count = 4;
-	std::string point_light_str = "point_lights[i]";
-	int plstr_i_idx = point_light_str.find('[') + 1;
-	for (int i = 0; i < point_light_count; i++) {
+	highlight_shader.use();
+	highlight_shader.setMat4("model", &model);
+	highlight_shader.setMat4("view", &view);
+	highlight_shader.setMat4("projection", &projection);
 
-		point_light_str[plstr_i_idx] = '0' + i;
+	ground_shader.use();
+	ground_shader.setMat4("model", &ground_model);
+	ground_shader.setMat4("view", &view);
+	ground_shader.setMat4("projection", &projection);
+	ground_shader.setVec3("ground_color", &ground_color);
 
-		glm::vec3 light_color_diffuse = 1.f / steradians * light_color;
-
-		ourShader.setVec3(point_light_str + ".ambient", 0.f, 0.f, 0.f);
-		ourShader.setVec3(point_light_str + ".diffuse", &light_color_diffuse);
-		ourShader.setVec3(point_light_str + ".specular", &light_color);
-		ourShader.setFloat(point_light_str + ".intensity", 40.f);
-		ourShader.setVec3(point_light_str + ".position", &light_positions[i]);
-	}
-
-	ourShader.setVec3("planar_light.direction", &sunlight_dir);
-	ourShader.setVec3("planar_light.ambient", &sunlight_ambient);
-	ourShader.setVec3("planar_light.diffuse", &sunlight_diffuse);
-	ourShader.setVec3("planar_light.specular", &sunlight_specular);
-	ourShader.setFloat("planar_light.intensity", 10.f);
-
-	ourShader.setVec3("flashlight.color", 1.0f, 1.0f, 1.0f);
-	ourShader.setFloat("flashlight.intensity", 2.f);
+	pass_lights_to_shader(ourShader, p, pl, f);
+	pass_lights_to_shader(ground_shader, p, pl, f);
 
 	// Background color
-	glClearColor(0.1f*light_color_0.x, 0.1f*light_color_0.y, 0.1f*light_color_0.z, 1.0f);
+	glClearColor(ambient_color.x, ambient_color.y, ambient_color.z, 1.0f);
 
 	// Enable z-buffer depth test
 	glEnable(GL_DEPTH_TEST);
@@ -228,51 +282,31 @@ int main(int argc, char** argv)
 		processInput(window, &ourShader);
 
 		// Rendering
-
 		float new_t = glfwGetTime();
 		dt = new_t - t;
 		t = new_t;
-
 		cout << "frametime " << dt << endl;
-
-		// Changing light color
-		//light_color = light_color_0 + sin(2.f *t) * color_axis_0 + cos(2.f * t) * color_axis_1;
-
-		/*
-		glm::vec3 light_ambient = 0.2f * light_color;
-		glm::vec3 light_diffuse = 0.5f * light_color;
-		glm::vec3 light_specular = 1.f * light_color;
-
-		ourShader.setVec3("point_light.ambient", &light_ambient);
-		ourShader.setVec3("point_light.diffuse", &light_diffuse);
-		*/
-		//light_pos = light_pos_0 + (float)sin(3. * t) * glm::vec3(0., 0., 1.);
-
-		glClearColor(0.01f, 0.02f, 0.f, 1.0f);
+		cout << "framerate " << 1./dt << endl;
 
 		// Co-ordinate systems
 		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
+
 		ourShader.use();
-		model = glm::mat4(1.0f);
 		ourShader.setMat4("model", &model);
 		ourShader.setMat4("view", &view);
 		ourShader.setVec3("view_pos", &cam_pos);
 
-		/*
-		for (int i = 0; i < point_light_count; i++) {
+		highlight_shader.use();
+		highlight_shader.setMat4("model", &model);
+		highlight_shader.setMat4("view", &view);
 
-			point_light_str[plstr_i_idx] = '0' + i;
-
-			// light source
-			ourShader.use();
-			ourShader.setVec3(point_light_str + ".position", &light_positions[i]);
-		}
-		*/
+		ground_shader.use();
+		ground_shader.setMat4("view", &view);
 
 		// Flashlight
 		ourShader.use();
-		flashlight_offset = glm::vec3(glm::inverse(view) * flashlight_offset_viewspace);
-		ourShader.setVec3("flashlight.offset", &flashlight_offset);
+		f.offset = glm::vec3(glm::inverse(view) * flashlight_offset_viewspace);
+		ourShader.setVec3("flashlight.offset", &f.offset);
 		ourShader.setVec3("flashlight.direction", cam_fwd.x, cam_fwd.y, cam_fwd.z);
 
 		glEnable(GL_DEPTH_TEST);
@@ -281,21 +315,25 @@ int main(int argc, char** argv)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glStencilMask(0xFF);
 
+		// Draw ground
+		glStencilMask(0x00);
+		ground_shader.use();
+		ground.draw(ground_shader);
+
+		// Draw backpack
+		glStencilMask(0xFF);
+		ourShader.use();
 		guitar_pack.draw(ourShader);
 
 		// Highlight
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 		glStencilMask(0x00); // don't write to the stencil buffer. can't we just stencil op with three keeps?
 		glDisable(GL_DEPTH_TEST);
-
-		highlight_shader.use();
-		highlight_shader.setMat4("model", &model);
-		highlight_shader.setMat4("view", &view);
-		highlight_shader.setMat4("projection", &projection);
 		
+		highlight_shader.use();
 		guitar_pack.draw(highlight_shader);
+
 
 		glStencilMask(0xFF); // Actually need this for glClear to work!
 
