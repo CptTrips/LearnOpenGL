@@ -224,6 +224,11 @@ int main(int argc, char** argv)
 	vegetation.push_back(glm::vec3(0.0f, 0.0f, 0.7f));
 	vegetation.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
 	vegetation.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
+	for (int i = 0; i < vegetation.size(); i++)
+	{
+		vegetation[i] *= 3.f;
+		vegetation[i] += glm::vec3(0.f, -1.7f, 0.f);
+	}
 	glm::mat4 grass_model = glm::mat4(1.);
 	grass_model = glm::translate(grass_model, glm::vec3(-0.5, -.5, 0.));
 

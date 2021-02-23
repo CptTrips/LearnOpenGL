@@ -16,5 +16,8 @@ out vec4 FragColor;
 
 void main()
 {
-	FragColor = texture(materials[0].diffuse, tex_coord);
+    vec4 tex_color = texture(materials[0].diffuse, tex_coord);
+    if (tex_color.a < 0.1)
+        discard;
+	FragColor = tex_color;
 }
