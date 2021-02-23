@@ -206,8 +206,9 @@ int main(int argc, char** argv)
 	string guitar_pack_path = models_folder + "backpack\\backpack.obj";
 	Model guitar_pack = Model(guitar_pack_path.c_str());
 
-	// Wireframe mode
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	string window_path = models_folder + "window\\window.obj";
+	Model red_window = Model(window_path.c_str());
+
 
 	// 3D Transformations
 	glm::mat4 model = glm::mat4(1.0f); // model transform
@@ -232,12 +233,15 @@ int main(int argc, char** argv)
 	glm::mat4 grass_model = glm::mat4(1.);
 	grass_model = glm::translate(grass_model, glm::vec3(-0.5, -.5, 0.));
 
+	glm::mat4 window_model = glm::translate(glm::mat4(1.), glm::vec3(0., 0., 5.));
+
 	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
 	
 	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 	
 
+	// Lights
 	glm::vec3 ground_color = glm::vec3(.3, .12, 0.);
 
 	glm::vec3 ambient_color = 0.25f*glm::vec3(0.1f, 0.2f, .05f);
@@ -286,9 +290,12 @@ int main(int argc, char** argv)
 	grass_shader.setMat4("view", &view);
 	grass_shader.setMat4("projection", &projection);
 
-
 	pass_lights_to_shader(ourShader, p, pl, f);
 	pass_lights_to_shader(ground_shader, p, pl, f);
+
+
+	// Wireframe mode
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// Background color
 	glClearColor(ambient_color.x, ambient_color.y, ambient_color.z, 1.0f);
@@ -298,6 +305,10 @@ int main(int argc, char** argv)
 
 	// Enable stencil buffer
 	glEnable(GL_STENCIL_TEST);
+
+	// Enable Blending
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -350,6 +361,8 @@ int main(int argc, char** argv)
 		ground_shader.use();
 		ground.draw(ground_shader);
 
+		// Draw grass
+		glStencilMask(0x00);
 		grass_shader.use();
 		for (unsigned int i = 0; i < vegetation.size(); i++)
 		{
@@ -358,15 +371,21 @@ int main(int argc, char** argv)
 			grass.draw(grass_shader);
 		}
 
+		// Draw window
+		grass_shader.use();
+		grass_shader.setMat4("model", &window_model);
+		red_window.draw(grass_shader);
+
 		// Draw backpack
 		glStencilMask(0xFF);
 		ourShader.use();
 		guitar_pack.draw(ourShader);
 
+
 		// Highlight
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 		glStencilMask(0x00); // don't write to the stencil buffer. can't we just stencil op with three keeps?
-		glDisable(GL_DEPTH_TEST);
+		//glDisable(GL_DEPTH_TEST);
 		
 		highlight_shader.use();
 		guitar_pack.draw(highlight_shader);
