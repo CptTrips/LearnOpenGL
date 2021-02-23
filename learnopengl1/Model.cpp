@@ -26,18 +26,18 @@ void Model::load_model(string path)
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
-	cout << "node found" << endl;
+	//cout << "node found" << endl;
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
-		cout << "processing mesh " << i << " of " << node->mNumMeshes << endl;
+		//cout << "processing mesh " << i << " of " << node->mNumMeshes << endl;
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		meshes.push_back(process_mesh(mesh, scene));
 	}
 
-	cout << "node has " << node->mNumChildren << " children" << endl;
+	//cout << "node has " << node->mNumChildren << " children" << endl;
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
-		cout << "child " << i << " of " << node->mNumChildren << endl;
+		//cout << "child " << i << " of " << node->mNumChildren << endl;
 		process_node(node->mChildren[i], scene);
 	}
 }
@@ -94,8 +94,8 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 			indices.push_back(face.mIndices[j]);
 	}
 
-	cout << "mesh has " << mesh->mNumVertices << " vertices "
-		<< mesh->mNumFaces << " faces" << endl;
+	//cout << "mesh has " << mesh->mNumVertices << " vertices "
+	//	<< mesh->mNumFaces << " faces" << endl;
 
 	if (mesh->mMaterialIndex >= 0)
 	{
@@ -107,7 +107,7 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 		vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR, "specular");
 		textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
 
-		cout << "mesh material " << material << endl;
+		//cout << "mesh material " << material << endl;
 	}
 
 	return Mesh(vertices, indices, textures);
@@ -121,7 +121,15 @@ unsigned int Model::texture_from_file(const char* path)
 	glGenTextures(1, &texture_id);
 
 	cout << "loading texture " << path << endl;
-	stbi_set_flip_vertically_on_load(true);
+
+	string path_str = string(path);
+	string extention = path_str.substr(path_str.find_last_of('.'), string::npos);
+
+	if (extention == ".jpg")
+		stbi_set_flip_vertically_on_load(true);
+	else
+		stbi_set_flip_vertically_on_load(false);
+
 	unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
 
 	if (data) {
@@ -169,6 +177,7 @@ vector<Texture> Model::load_material_textures(aiMaterial* mat, aiTextureType typ
 			// if texture has alreay been loaded
 			if (std::strcmp(loaded_textures[j].path.c_str(), path.c_str()) == 0)
 			{
+				//cout << "texture exists " << path << endl;
 				textures.push_back(loaded_textures[j]);
 				skip = true;
 				break;
@@ -177,6 +186,7 @@ vector<Texture> Model::load_material_textures(aiMaterial* mat, aiTextureType typ
 
 		if (!skip)
 		{
+			//cout << "new texture " << path << endl;
 			Texture texture;
 			texture.id = texture_from_file(path.c_str());
 			texture.type = type_name;

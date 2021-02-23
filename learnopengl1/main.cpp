@@ -30,8 +30,8 @@ float dt = 0.f;
 bool first_mouse = true;
 const float mouse_sensitivity = 0.001f;
 float mouse_x, mouse_y = 0.;
-float phi = 0;
-float theta = glm::radians(90.);
+float phi = glm::acos(cam_fwd.z);
+float theta = glm::acos(cam_fwd.y);
 
 
 // Function to call when window is resized
@@ -96,7 +96,7 @@ void mouse_callback(GLFWwindow* window, double x, double y)
 	phi = glm::mod(phi, 2.f * glm::pi<float>());
 	
 	theta += dtheta;
-	glm::clamp(theta, 0.f, glm::pi<float>());
+	theta = glm::clamp(theta, 1e-3f, glm::pi<float>() - 1e-3f);
 
 	//std::cout << '(' << theta << ',' << phi << ')' << std::endl;
 
@@ -192,12 +192,16 @@ int main(int argc, char** argv)
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
 	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
 	Shader ground_shader("ground_v.glsl", "ground_f.glsl");
+	Shader grass_shader("grass_v.glsl", "grass_f.glsl");
 
 	// Load model
 	string models_folder = "C:\\Users\\sodai\\Documents\\projects\\TripsLearnOpenGL\\learnopengl1\\models\\";
 
 	string ground_square_path = models_folder + "square\\square.obj";
 	Model ground = Model(ground_square_path.c_str());
+
+	string grass_model_path = models_folder + "grass\\grass.obj";
+	Model grass = Model(grass_model_path.c_str());
 
 	string guitar_pack_path = models_folder + "backpack\\backpack.obj";
 	Model guitar_pack = Model(guitar_pack_path.c_str());
@@ -207,11 +211,21 @@ int main(int argc, char** argv)
 
 	// 3D Transformations
 	glm::mat4 model = glm::mat4(1.0f); // model transform
+
 	glm::mat4 ground_model = glm::mat4(1.0f);
 	ground_model = glm::translate(ground_model, glm::vec3(0., -1.7, 0.));
 	ground_model = glm::rotate(ground_model, -glm::radians(90.f), glm::vec3(1., 0., 0.));
 	ground_model = glm::scale(ground_model, glm::vec3(100., 100., 100.));
 	ground_model = glm::translate(ground_model, glm::vec3(-.5, -.5, 0.));
+
+	vector<glm::vec3> vegetation;
+	vegetation.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
+	vegetation.push_back(glm::vec3(1.5f, 0.0f, 0.51f));
+	vegetation.push_back(glm::vec3(0.0f, 0.0f, 0.7f));
+	vegetation.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
+	vegetation.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
+	glm::mat4 grass_model = glm::mat4(1.);
+	grass_model = glm::translate(grass_model, glm::vec3(-0.5, -.5, 0.));
 
 	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
 	
@@ -230,7 +244,6 @@ int main(int argc, char** argv)
 	p.ambient = glm::vec3(0.f);
 	p.intensity = 100.f;
 	p.position = glm::vec3(1.f, -1.3f, 5.f);
-
 
 	PlanarLight pl;
 	glm::vec3 sunlight_color = glm::vec3(1.f, 1.f, 0.98f);
@@ -263,6 +276,12 @@ int main(int argc, char** argv)
 	ground_shader.setMat4("projection", &projection);
 	ground_shader.setVec3("ground_color", &ground_color);
 
+	grass_shader.use();
+	grass_shader.setMat4("model", &grass_model);
+	grass_shader.setMat4("view", &view);
+	grass_shader.setMat4("projection", &projection);
+
+
 	pass_lights_to_shader(ourShader, p, pl, f);
 	pass_lights_to_shader(ground_shader, p, pl, f);
 
@@ -285,8 +304,10 @@ int main(int argc, char** argv)
 		float new_t = glfwGetTime();
 		dt = new_t - t;
 		t = new_t;
+		/*
 		cout << "frametime " << dt << endl;
 		cout << "framerate " << 1./dt << endl;
+		*/
 
 		// Co-ordinate systems
 		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
@@ -302,6 +323,9 @@ int main(int argc, char** argv)
 
 		ground_shader.use();
 		ground_shader.setMat4("view", &view);
+
+		grass_shader.use();
+		grass_shader.setMat4("view", &view);
 
 		// Flashlight
 		ourShader.use();
@@ -321,6 +345,14 @@ int main(int argc, char** argv)
 		ground_shader.use();
 		ground.draw(ground_shader);
 
+		grass_shader.use();
+		for (unsigned int i = 0; i < vegetation.size(); i++)
+		{
+			grass_model = glm::translate(glm::mat4(1.), vegetation[i]);
+			grass_shader.setMat4("model", &grass_model);
+			grass.draw(grass_shader);
+		}
+
 		// Draw backpack
 		glStencilMask(0xFF);
 		ourShader.use();
@@ -333,7 +365,6 @@ int main(int argc, char** argv)
 		
 		highlight_shader.use();
 		guitar_pack.draw(highlight_shader);
-
 
 		glStencilMask(0xFF); // Actually need this for glClear to work!
 

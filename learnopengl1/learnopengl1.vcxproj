@@ -165,8 +165,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="FragmentShader.glsl" />
-    <None Include="grass_f.glsl" />
     <None Include="grass_v.glsl" />
+    <None Include="grass_f.glsl" />
     <None Include="ground_f.glsl" />
     <None Include="ground_v.glsl" />
     <None Include="highlight_v.glsl" />

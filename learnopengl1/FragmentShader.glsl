@@ -10,8 +10,6 @@ struct Material {
     sampler2D emissive;
     float shininess;
 };
-
-//uniform Material material;
 #define MAX_TEXTURE 128
 uniform Material materials[MAX_TEXTURE];
 
@@ -22,10 +20,8 @@ struct PointLight {
     vec3 specular;
     float intensity;
 };
-
 #define POINT_LIGHT_COUNT 16
 uniform PointLight point_lights[POINT_LIGHT_COUNT];
-
 
 struct PlanarLight {
     vec3 direction;
@@ -34,7 +30,6 @@ struct PlanarLight {
     vec3 specular;
     float intensity;
 };
-
 uniform PlanarLight planar_light;
 
 struct Flashlight {
@@ -43,7 +38,6 @@ struct Flashlight {
     vec3 color;
     float intensity;
 };
-
 uniform Flashlight flashlight;
 
 uniform vec3 view_pos;
@@ -68,7 +62,6 @@ vec3 diffuse_color(Material material, vec3 incident_intensity, vec3 unit_normal,
 
     return diffuse_color;
 }
-
 
 vec3 point_light_illumination(vec3 unit_normal, PointLight point_light) {
     
