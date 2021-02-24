@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <map>
 
 #include <glad\glad.h>
 #include <GLFW\glfw3.h>
@@ -188,37 +189,32 @@ int main(int argc, char** argv)
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
-	// Load shaders
-	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
-	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
-	Shader ground_shader("ground_v.glsl", "ground_f.glsl");
-	Shader grass_shader("grass_v.glsl", "grass_f.glsl");
+	// 3D Transformations
+	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
+	
+	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
+	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 
 	// Load model
 	string models_folder = "C:\\Users\\sodai\\Documents\\projects\\TripsLearnOpenGL\\learnopengl1\\models\\";
 
 	string ground_square_path = models_folder + "square\\square.obj";
 	Model ground = Model(ground_square_path.c_str());
-
-	string grass_model_path = models_folder + "grass\\grass.obj";
-	Model grass = Model(grass_model_path.c_str());
-
-	string guitar_pack_path = models_folder + "backpack\\backpack.obj";
-	Model guitar_pack = Model(guitar_pack_path.c_str());
-
-	string window_path = models_folder + "window\\window.obj";
-	Model red_window = Model(window_path.c_str());
-
-
-	// 3D Transformations
-	glm::mat4 model = glm::mat4(1.0f); // model transform
-
+	Shader ground_shader("ground_v.glsl", "ground_f.glsl");
 	glm::mat4 ground_model = glm::mat4(1.0f);
 	ground_model = glm::translate(ground_model, glm::vec3(0., -1.7, 0.));
 	ground_model = glm::rotate(ground_model, -glm::radians(90.f), glm::vec3(1., 0., 0.));
 	ground_model = glm::scale(ground_model, glm::vec3(100., 100., 100.));
 	ground_model = glm::translate(ground_model, glm::vec3(-.5, -.5, 0.));
+	glm::vec3 ground_color = glm::vec3(.3, .12, 0.);
+	ground_shader.use();
+	ground_shader.setVec3("ground_color", &ground_color);
+	ground_shader.setMat4("model", &ground_model);
+	ground_shader.setMat4("view", &view);
+	ground_shader.setMat4("projection", &projection);
 
+	string grass_model_path = models_folder + "grass\\grass.obj";
+	Model grass = Model(grass_model_path.c_str());
 	vector<glm::vec3> vegetation;
 	vegetation.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
 	vegetation.push_back(glm::vec3(1.5f, 0.0f, 0.51f));
@@ -232,18 +228,36 @@ int main(int argc, char** argv)
 	}
 	glm::mat4 grass_model = glm::mat4(1.);
 	grass_model = glm::translate(grass_model, glm::vec3(-0.5, -.5, 0.));
+	Shader grass_shader("grass_v.glsl", "grass_f.glsl");
+	grass_shader.use();
+	grass_shader.setMat4("model", &grass_model);
+	grass_shader.setMat4("view", &view);
+	grass_shader.setMat4("projection", &projection);
 
+	string guitar_pack_path = models_folder + "backpack\\backpack.obj";
+	Model guitar_pack = Model(guitar_pack_path.c_str());
+	glm::mat4 model = glm::mat4(1.0f); // model transform
+	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
+	ourShader.use();
+	ourShader.setMat4("model", &model);
+	ourShader.setMat4("view", &view);
+	ourShader.setMat4("projection", &projection);
+	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
+	highlight_shader.use();
+	highlight_shader.setMat4("model", &model);
+	highlight_shader.setMat4("view", &view);
+	highlight_shader.setMat4("projection", &projection);
+
+	string window_path = models_folder + "window\\window.obj";
+	Model red_window = Model(window_path.c_str());
 	glm::mat4 window_model = glm::translate(glm::mat4(1.), glm::vec3(0., 0., 5.));
 
-	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
-	
-	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
-	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
+	string cube_path = models_folder + "cube\\cube.obj";
+	Model cube = Model(cube_path.c_str());
+	glm::mat4 cube_model = glm::translate(glm::mat4(1.), glm::vec3(2., -1.2, -3.));
 	
 
 	// Lights
-	glm::vec3 ground_color = glm::vec3(.3, .12, 0.);
-
 	glm::vec3 ambient_color = 0.25f*glm::vec3(0.1f, 0.2f, .05f);
 
 	PointLight p;
@@ -268,31 +282,14 @@ int main(int argc, char** argv)
 	glm::vec4 flashlight_offset_viewspace = glm::vec4(0.f);// -0.1f, 0.f, 0.1f, 1.f);;
 	glm::vec3 flashlight_offset;
 
-	// Assign uniforms
-	ourShader.use();
-	ourShader.setMat4("model", &model);
-	ourShader.setMat4("view", &view);
-	ourShader.setMat4("projection", &projection);
-
-	highlight_shader.use();
-	highlight_shader.setMat4("model", &model);
-	highlight_shader.setMat4("view", &view);
-	highlight_shader.setMat4("projection", &projection);
-
-	ground_shader.use();
-	ground_shader.setMat4("model", &ground_model);
-	ground_shader.setMat4("view", &view);
-	ground_shader.setMat4("projection", &projection);
-	ground_shader.setVec3("ground_color", &ground_color);
-
-	grass_shader.use();
-	grass_shader.setMat4("model", &grass_model);
-	grass_shader.setMat4("view", &view);
-	grass_shader.setMat4("projection", &projection);
 
 	pass_lights_to_shader(ourShader, p, pl, f);
 	pass_lights_to_shader(ground_shader, p, pl, f);
 
+	// Framebuffer
+	unsigned int fbo;
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
 	// Wireframe mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -310,6 +307,10 @@ int main(int argc, char** argv)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	// Enable face culling
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -322,8 +323,8 @@ int main(int argc, char** argv)
 		t = new_t;
 		/*
 		cout << "frametime " << dt << endl;
-		cout << "framerate " << 1./dt << endl;
 		*/
+		cout << "framerate " << 1./dt << endl;
 
 		// Co-ordinate systems
 		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
@@ -359,27 +360,39 @@ int main(int argc, char** argv)
 		// Draw ground
 		glStencilMask(0x00);
 		ground_shader.use();
+		ground_shader.setMat4("model", &ground_model);
 		ground.draw(ground_shader);
 
-		// Draw grass
-		glStencilMask(0x00);
-		grass_shader.use();
-		for (unsigned int i = 0; i < vegetation.size(); i++)
-		{
-			grass_model = glm::translate(glm::mat4(1.), vegetation[i]);
-			grass_shader.setMat4("model", &grass_model);
-			grass.draw(grass_shader);
-		}
+		// Draw cube
+		ground_shader.setMat4("model", &cube_model);
+		cube.draw(ground_shader);
 
 		// Draw window
 		grass_shader.use();
-		grass_shader.setMat4("model", &window_model);
 		red_window.draw(grass_shader);
 
 		// Draw backpack
 		glStencilMask(0xFF);
 		ourShader.use();
 		guitar_pack.draw(ourShader);
+
+		// Draw grass
+		glStencilMask(0x00);
+		grass_shader.use();
+		std::map<float, glm::vec3> sorted;
+		for (unsigned int i = 0; i < vegetation.size(); i++)
+		{
+			float distance = glm::length(cam_pos - vegetation[i]);
+			sorted[distance] = vegetation[i];
+		}
+		for (std::map<float,glm::vec3>::reverse_iterator it=sorted.rbegin();
+			it!=sorted.rend();
+			it++)
+		{
+			grass_model = glm::translate(glm::mat4(1.), it->second);
+			grass_shader.setMat4("model", &grass_model);
+			red_window.draw(grass_shader);
+		}
 
 
 		// Highlight
@@ -401,6 +414,7 @@ int main(int argc, char** argv)
 	//glDeleteVertexArrays(1, &VAO);
 	//glDeleteBuffers(1, &VBO);
 	//glDeleteProgram(shaderProgram); // should probably implement destructor in Shader
+	glDeleteFramebuffers(1, &fbo);
 	glfwTerminate();
 	return 0;
 

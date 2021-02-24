@@ -73,7 +73,11 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 		Vertex vertex;
 
 		vertex.position = v3_assimp_to_glm(mesh->mVertices[i]);
-		vertex.normal = v3_assimp_to_glm(mesh->mNormals[i]);
+
+		if (mesh->mNormals)
+			vertex.normal = v3_assimp_to_glm(mesh->mNormals[i]);
+		else
+			vertex.normal = glm::vec3(0.f);
 
 		if (mesh->mTextureCoords[0])
 		{
