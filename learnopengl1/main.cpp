@@ -18,6 +18,9 @@
 #include "Model.h"
 #include "Mesh.h"
 
+const int window_width = 800;
+const int window_height = 600;
+
 constexpr float steradians = 4.f * glm::pi<float>();
 
 const float radius = 10.f;
@@ -163,7 +166,7 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Create window object
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(window_width, window_height, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -195,11 +198,12 @@ int main(int argc, char** argv)
 	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 
+
 	// Load model
 	string models_folder = "C:\\Users\\sodai\\Documents\\projects\\TripsLearnOpenGL\\learnopengl1\\models\\";
 
-	string ground_square_path = models_folder + "square\\square.obj";
-	Model ground = Model(ground_square_path.c_str());
+	string square_path = models_folder + "square\\square.obj";
+	Model ground = Model(square_path.c_str());
 	Shader ground_shader("ground_v.glsl", "ground_f.glsl");
 	glm::mat4 ground_model = glm::mat4(1.0f);
 	ground_model = glm::translate(ground_model, glm::vec3(0., -1.7, 0.));
@@ -234,7 +238,7 @@ int main(int argc, char** argv)
 	grass_shader.setMat4("view", &view);
 	grass_shader.setMat4("projection", &projection);
 
-	string guitar_pack_path = models_folder + "backpack\\backpack.obj";
+	string guitar_pack_path = models_folder + "container\\container.obj";
 	Model guitar_pack = Model(guitar_pack_path.c_str());
 	glm::mat4 model = glm::mat4(1.0f); // model transform
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
@@ -252,10 +256,19 @@ int main(int argc, char** argv)
 	Model red_window = Model(window_path.c_str());
 	glm::mat4 window_model = glm::translate(glm::mat4(1.), glm::vec3(0., 0., 5.));
 
-	string cube_path = models_folder + "cube\\cube.obj";
+	string cube_path = models_folder + "container\\container.obj";
 	Model cube = Model(cube_path.c_str());
 	glm::mat4 cube_model = glm::translate(glm::mat4(1.), glm::vec3(2., -1.2, -3.));
 	
+	// Framebuffer shader
+	Shader pp_shader("postprocess_v.glsl", "postprocess_f.glsl");
+	Model frame(square_path.c_str());
+	glm::mat4 frame_model = glm::mat4(1.);
+	frame_model = glm::scale(frame_model, glm::vec3(2., 2., 1.));
+	frame_model = glm::translate(frame_model, glm::vec3(-0.5, -0.5, 0.));
+	pp_shader.use();
+	pp_shader.setMat4("model", &frame_model);
+
 
 	// Lights
 	glm::vec3 ambient_color = 0.25f*glm::vec3(0.1f, 0.2f, .05f);
@@ -291,6 +304,30 @@ int main(int argc, char** argv)
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+	// Attach renderbuffer for stencil & depth testing (not sampling)
+	unsigned int rbo;
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	pp_shader.setInt("screen_texture", 0);
+
 	// Wireframe mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -308,8 +345,8 @@ int main(int argc, char** argv)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Enable face culling
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT);
 
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -350,6 +387,9 @@ int main(int argc, char** argv)
 		ourShader.setVec3("flashlight.offset", &f.offset);
 		ourShader.setVec3("flashlight.direction", cam_fwd.x, cam_fwd.y, cam_fwd.z);
 
+		// Render to framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
 		glEnable(GL_DEPTH_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
@@ -364,8 +404,9 @@ int main(int argc, char** argv)
 		ground.draw(ground_shader);
 
 		// Draw cube
-		ground_shader.setMat4("model", &cube_model);
-		cube.draw(ground_shader);
+		ourShader.use();
+		ourShader.setMat4("model", &cube_model);
+		cube.draw(ourShader);
 
 		// Draw window
 		grass_shader.use();
@@ -374,6 +415,7 @@ int main(int argc, char** argv)
 		// Draw backpack
 		glStencilMask(0xFF);
 		ourShader.use();
+		ourShader.setMat4("model", &model);
 		guitar_pack.draw(ourShader);
 
 		// Draw grass
@@ -404,6 +446,20 @@ int main(int argc, char** argv)
 		guitar_pack.draw(highlight_shader);
 
 		glStencilMask(0xFF); // Actually need this for glClear to work!
+
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+
+		// Post-process framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glClearColor(1.f, 1.f, 1.f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		pp_shader.use();
+		pp_shader.setInt("screen_texture", 0);
+		glDisable(GL_DEPTH_TEST);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		frame.draw(pp_shader);
 
 		// Check and call events and swap buffers
 		glfwSwapBuffers(window);

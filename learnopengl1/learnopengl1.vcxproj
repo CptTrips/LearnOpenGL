@@ -172,6 +172,8 @@
     <None Include="highlight_v.glsl" />
     <None Include="light_source_f.glsl" />
     <None Include="light_source_v.glsl" />
+    <None Include="postprocess_f.glsl" />
+    <None Include="postprocess_v.glsl" />
     <None Include="VertexShader.glsl" />
     <None Include="window_f.glsl" />
     <None Include="window_v.glsl" />
