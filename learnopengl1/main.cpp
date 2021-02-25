@@ -37,6 +37,11 @@ float mouse_x, mouse_y = 0.;
 float phi = glm::acos(cam_fwd.z);
 float theta = glm::acos(cam_fwd.y);
 
+struct TextureData
+{
+	unsigned char* data;
+	int width, height, channels;
+};
 
 // Function to call when window is resized
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -107,6 +112,15 @@ void mouse_callback(GLFWwindow* window, double x, double y)
 	cam_fwd = glm::vec3(-sin(phi) * sin(theta), cos(theta), cos(phi) * sin(theta));
 }
 
+TextureData load_texture(string path)
+{
+	TextureData td;
+
+
+	td.data = stbi_load(path.c_str(), &td.width, &td.height, &td.channels, 0);
+
+	return td;
+}
 
 struct PointLight
 {
@@ -269,6 +283,14 @@ int main(int argc, char** argv)
 	pp_shader.use();
 	pp_shader.setMat4("model", &frame_model);
 
+	// Cubemap
+	Shader skybox_shader("cubemap_v.glsl", "cubemap_f.glsl");
+	Model skybox(cube_path.c_str());
+	glm::mat4 skybox_model = glm::translate(glm::mat4(1.), glm::vec3(-0.5));
+	skybox_shader.use();
+	skybox_shader.setMat4("model", &skybox_model);
+	skybox_shader.setMat4("view", &view);
+	skybox_shader.setMat4("projection", &projection);
 
 	// Lights
 	glm::vec3 ambient_color = 0.25f*glm::vec3(0.1f, 0.2f, .05f);
@@ -328,6 +350,47 @@ int main(int argc, char** argv)
 
 	pp_shader.setInt("screen_texture", 0);
 
+	// Cubemap
+	vector<string> cubemap_paths =
+	{
+		"skybox\\left.jpg",
+		"skybox\\right.jpg",
+		"skybox\\top.jpg",
+		"skybox\\bottom.jpg",
+		"skybox\\back.jpg",
+		"skybox\\front.jpg"
+	};
+	unsigned int cubemap_tex_id;
+	glGenTextures(1, &cubemap_tex_id);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
+
+	stbi_set_flip_vertically_on_load(false);
+	for (unsigned int i = 0; i < cubemap_paths.size(); i++)
+	{
+		TextureData td = load_texture(cubemap_paths[i]);
+		if (td.data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, td.width, td.height, 0,
+				GL_RGB, GL_UNSIGNED_BYTE, td.data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			cout << "Cubemap loaded " << cubemap_paths[i] << endl;
+			stbi_image_free(td.data);
+		}
+		else
+		{
+			cout << "Cubemap failed to load at path " << cubemap_paths[i] << endl;
+			stbi_image_free(td.data);
+		}
+	}
+
+	
+
 	// Wireframe mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -361,7 +424,7 @@ int main(int argc, char** argv)
 		/*
 		cout << "frametime " << dt << endl;
 		*/
-		cout << "framerate " << 1./dt << endl;
+		//cout << "framerate " << 1./dt << endl;
 
 		// Co-ordinate systems
 		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
@@ -397,6 +460,17 @@ int main(int argc, char** argv)
 
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 
+		// Skybox
+		glDepthMask(GL_FALSE);
+		skybox_shader.use();
+		glm::mat4 skybox_view = glm::lookAt(glm::vec3(0.), cam_fwd, cam_up);
+		skybox_shader.setMat4("view", &skybox_view);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
+		skybox.draw(skybox_shader);
+		glDepthMask(GL_TRUE);
+
+		/*
 		// Draw ground
 		glStencilMask(0x00);
 		ground_shader.use();
@@ -434,16 +508,19 @@ int main(int argc, char** argv)
 			grass_model = glm::translate(glm::mat4(1.), it->second);
 			grass_shader.setMat4("model", &grass_model);
 			red_window.draw(grass_shader);
-		}
+		}*/
 
 
 		// Highlight
+		/*
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 		glStencilMask(0x00); // don't write to the stencil buffer. can't we just stencil op with three keeps?
 		//glDisable(GL_DEPTH_TEST);
 		
 		highlight_shader.use();
 		guitar_pack.draw(highlight_shader);
+		*/
+
 
 		glStencilMask(0xFF); // Actually need this for glClear to work!
 

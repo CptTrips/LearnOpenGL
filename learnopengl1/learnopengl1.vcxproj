@@ -164,6 +164,8 @@
     <Image Include="wall.jpg" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cubemap_f.glsl" />
+    <None Include="cubemap_v.glsl" />
     <None Include="FragmentShader.glsl" />
     <None Include="grass_v.glsl" />
     <None Include="grass_f.glsl" />

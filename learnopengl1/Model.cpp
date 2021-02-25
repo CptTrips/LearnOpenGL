@@ -7,7 +7,7 @@ void Model::draw(Shader& shader)
 		meshes[i].draw(shader);
 }
 
-void Model::load_model(string path)
+void Model::load_model(string path, bool flip_uvs)
 {
 	cout << "loading model " << path << endl;
 	Assimp::Importer importer;
@@ -42,7 +42,7 @@ void Model::process_node(aiNode* node, const aiScene* scene)
 	}
 }
 
-glm::vec3& v3_assimp_to_glm(const aiVector3D& v_in) {
+glm::vec3 v3_assimp_to_glm(const aiVector3D& v_in) {
 
 	glm::vec3 v_out;
 	v_out.x = (float)v_in.x;
@@ -52,7 +52,7 @@ glm::vec3& v3_assimp_to_glm(const aiVector3D& v_in) {
 	return v_out;
 }
 
-glm::vec2& v2_assimp_to_glm(const aiVector3D& v_in) {
+glm::vec2 v2_assimp_to_glm(const aiVector3D& v_in) {
 
 	glm::vec2 v_out;
 	v_out.x = v_in.x;
