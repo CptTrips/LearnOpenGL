@@ -252,7 +252,7 @@ int main(int argc, char** argv)
 	grass_shader.setMat4("view", &view);
 	grass_shader.setMat4("projection", &projection);
 
-	string guitar_pack_path = models_folder + "container\\container.obj";
+	string guitar_pack_path = models_folder + "backpack\\backpack.obj";//"container\\container.obj";
 	Model guitar_pack = Model(guitar_pack_path.c_str());
 	glm::mat4 model = glm::mat4(1.0f); // model transform
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
@@ -265,6 +265,20 @@ int main(int argc, char** argv)
 	highlight_shader.setMat4("model", &model);
 	highlight_shader.setMat4("view", &view);
 	highlight_shader.setMat4("projection", &projection);
+	// Reflective
+	Shader reflective_shader("reflective_v.glsl", "reflective_f.glsl");
+	reflective_shader.use();
+	reflective_shader.setMat4("model", &model);
+	reflective_shader.setMat4("view", &view);
+	reflective_shader.setMat4("projection", &projection);
+	reflective_shader.setVec3("cam_pos", &cam_pos);
+	// Refractive
+	Shader refractive_shader("refractive_v.glsl", "refractive_f.glsl");
+	refractive_shader.use();
+	refractive_shader.setMat4("model", &model);
+	refractive_shader.setMat4("view", &view);
+	refractive_shader.setMat4("projection", &projection);
+	refractive_shader.setVec3("cam_pos", &cam_pos);
 
 	string window_path = models_folder + "window\\window.obj";
 	Model red_window = Model(window_path.c_str());
@@ -273,6 +287,7 @@ int main(int argc, char** argv)
 	string cube_path = models_folder + "container\\container.obj";
 	Model cube = Model(cube_path.c_str());
 	glm::mat4 cube_model = glm::translate(glm::mat4(1.), glm::vec3(2., -1.2, -3.));
+
 	
 	// Framebuffer shader
 	Shader pp_shader("postprocess_v.glsl", "postprocess_f.glsl");
@@ -435,7 +450,6 @@ int main(int argc, char** argv)
 		ourShader.setMat4("model", &model);
 		ourShader.setMat4("view", &view);
 		ourShader.setVec3("view_pos", &cam_pos);
-		ourShader.setVec3("planar_light.direction", &pl.direction);
 
 		highlight_shader.use();
 		highlight_shader.setMat4("model", &model);
@@ -485,7 +499,20 @@ int main(int argc, char** argv)
 		glStencilMask(0xFF);
 		ourShader.use();
 		ourShader.setMat4("model", &model);
+		reflective_shader.use();
+		reflective_shader.setMat4("model", &model);
+		reflective_shader.setMat4("view", &view);
+		reflective_shader.setVec3("cam_pos", &cam_pos);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
+		refractive_shader.use();
+		refractive_shader.setMat4("model", &model);
+		refractive_shader.setMat4("view", &view);
+		refractive_shader.setVec3("cam_pos", &cam_pos);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
 		guitar_pack.draw(ourShader);
+
 
 		// Draw grass
 		glStencilMask(0x00);

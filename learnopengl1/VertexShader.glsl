@@ -13,10 +13,10 @@ out vec2 tex_coord;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(aPos, 1.0f); 
+    gl_Position = projection * view * model * vec4(aPos, 1.0); 
 
-    world_pos = vec3(model * vec4(aPos, 1.0f));
-    normal = mat3(transpose(inverse(mat3(model)))) * model_normal;
+    world_pos = vec3(model * vec4(aPos, 1.0));
+    normal = transpose(inverse(mat3(model))) * model_normal;
 
     tex_coord = tex_coord_in;
 }
