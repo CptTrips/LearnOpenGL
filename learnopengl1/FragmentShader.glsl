@@ -113,7 +113,7 @@ vec3 flashlight_illumination(vec3 unit_normal) {
 
     vec3 ac = vec3(texture(materials[0].diffuse, tex_coord)) * color_intensity * 0.;
 
-    if (costheta < 0.98) {
+    if (costheta < 0.999) {
 		return ac;
 	}
     
@@ -136,8 +136,8 @@ void main()
 		point_color += point_light_illumination(unit_normal, point_lights[i]);
     }
 
-    //vec3 flash_color = flashlight_illumination(unit_normal);
+    vec3 flash_color = flashlight_illumination(unit_normal)*0;
 
-    FragColor = vec4(planar_color + point_color, 1.0);
+    FragColor = vec4(planar_color + point_color + flash_color, 1.0);
 
 }

@@ -16,7 +16,7 @@ void main()
     gl_Position = projection * view * model * vec4(aPos, 1.0f); 
 
     world_pos = vec3(model * vec4(aPos, 1.0f));
-    normal = mat3(transpose(inverse(model))) * model_normal;
+    normal = mat3(transpose(inverse(mat3(model)))) * model_normal;
 
     tex_coord = tex_coord_in;
 }

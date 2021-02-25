@@ -300,16 +300,17 @@ int main(int argc, char** argv)
 	p.specular = light_color;
 	p.diffuse = light_color / steradians;
 	p.ambient = glm::vec3(0.f);
-	p.intensity = 100.f;
+	p.intensity = 1.f;
 	p.position = glm::vec3(1.f, -1.3f, 5.f);
 
 	PlanarLight pl;
 	glm::vec3 sunlight_color = glm::vec3(1.f, 1.f, 0.98f);
-	pl.ambient = 0.15f*glm::vec3(0.5f, .8f, 0.92f);
+	pl.ambient = 0.3*glm::vec3(0.5f, .8f, 0.96f);
 	pl.diffuse = (1.f/steradians) * sunlight_color;
 	pl.specular = sunlight_color;
-	pl.intensity = 4.f;
-	pl.direction = glm::normalize(glm::vec3(0.5f, 1.f, 0.5f));
+	pl.intensity = 10.f;
+	pl.direction = glm::normalize(glm::vec3(1.f, 1.f, -1.f));
+	glm::vec3 sun_rot_axis(0., 1., 0.);
 
 	FlashLight f;
 	f.color = glm::vec3(1.f);
@@ -399,6 +400,7 @@ int main(int argc, char** argv)
 
 	// Enable z-buffer depth test
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
 	// Enable stencil buffer
 	glEnable(GL_STENCIL_TEST);
@@ -433,6 +435,7 @@ int main(int argc, char** argv)
 		ourShader.setMat4("model", &model);
 		ourShader.setMat4("view", &view);
 		ourShader.setVec3("view_pos", &cam_pos);
+		ourShader.setVec3("planar_light.direction", &pl.direction);
 
 		highlight_shader.use();
 		highlight_shader.setMat4("model", &model);
@@ -460,22 +463,14 @@ int main(int argc, char** argv)
 
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 
-		// Skybox
-		glDepthMask(GL_FALSE);
-		skybox_shader.use();
-		glm::mat4 skybox_view = glm::lookAt(glm::vec3(0.), cam_fwd, cam_up);
-		skybox_shader.setMat4("view", &skybox_view);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
-		skybox.draw(skybox_shader);
-		glDepthMask(GL_TRUE);
 
-		/*
 		// Draw ground
+		/*
 		glStencilMask(0x00);
 		ground_shader.use();
 		ground_shader.setMat4("model", &ground_model);
 		ground.draw(ground_shader);
+		*/
 
 		// Draw cube
 		ourShader.use();
@@ -508,7 +503,7 @@ int main(int argc, char** argv)
 			grass_model = glm::translate(glm::mat4(1.), it->second);
 			grass_shader.setMat4("model", &grass_model);
 			red_window.draw(grass_shader);
-		}*/
+		}
 
 
 		// Highlight
@@ -520,6 +515,14 @@ int main(int argc, char** argv)
 		highlight_shader.use();
 		guitar_pack.draw(highlight_shader);
 		*/
+
+		// Skybox
+		skybox_shader.use();
+		glm::mat4 skybox_view = glm::lookAt(glm::vec3(0.), cam_fwd, cam_up);
+		skybox_shader.setMat4("view", &skybox_view);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
+		skybox.draw(skybox_shader);
 
 
 		glStencilMask(0xFF); // Actually need this for glClear to work!
