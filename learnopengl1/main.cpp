@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 
 
 	// Load model
-	string models_folder = "C:\\Users\\sodai\\Documents\\projects\\TripsLearnOpenGL\\learnopengl1\\models\\";
+	string models_folder = "models\\";
 
 	string square_path = models_folder + "square\\square.obj";
 	Model ground = Model(square_path.c_str());
