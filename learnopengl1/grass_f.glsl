@@ -9,7 +9,7 @@ struct Material {
 };
 
 //uniform Material material;
-#define MAX_TEXTURE 128
+#define MAX_TEXTURE 8
 uniform Material materials[MAX_TEXTURE];
 
 out vec4 FragColor;

@@ -4,8 +4,11 @@ layout(location=1) in vec3 normal;
 
 out vec3 tex_dir;
 
-uniform mat4 projection;
-uniform mat4 view;
+layout (std140) uniform shared_matrices
+{
+	uniform mat4 projection;
+	uniform mat4 view;
+};
 uniform mat4 model;
 
 uniform vec3 cam_pos;

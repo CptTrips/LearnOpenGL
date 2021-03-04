@@ -10,7 +10,7 @@ struct Material {
     sampler2D emissive;
     float shininess;
 };
-#define MAX_TEXTURE 128
+#define MAX_TEXTURE 8
 uniform Material materials[MAX_TEXTURE];
 
 struct PointLight {

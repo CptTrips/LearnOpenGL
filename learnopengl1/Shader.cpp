@@ -51,6 +51,7 @@ unsigned int Shader::loadSubShader(const char* sub_shader_path, GLuint shader_ty
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
+	std::cout << "Loading shader \n" << vertexPath << "\n" << fragmentPath << std::endl;
 	unsigned int vertex_shader = loadSubShader(vertexPath, GL_VERTEX_SHADER);
 	unsigned int fragment_shader = loadSubShader(fragmentPath, GL_FRAGMENT_SHADER);
 

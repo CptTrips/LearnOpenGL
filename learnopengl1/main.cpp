@@ -213,6 +213,7 @@ int main(int argc, char** argv)
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 
 
+
 	// Load model
 	string models_folder = "models\\";
 
@@ -228,8 +229,6 @@ int main(int argc, char** argv)
 	ground_shader.use();
 	ground_shader.setVec3("ground_color", &ground_color);
 	ground_shader.setMat4("model", &ground_model);
-	ground_shader.setMat4("view", &view);
-	ground_shader.setMat4("projection", &projection);
 
 	string grass_model_path = models_folder + "grass\\grass.obj";
 	Model grass = Model(grass_model_path.c_str());
@@ -249,8 +248,6 @@ int main(int argc, char** argv)
 	Shader grass_shader("grass_v.glsl", "grass_f.glsl");
 	grass_shader.use();
 	grass_shader.setMat4("model", &grass_model);
-	grass_shader.setMat4("view", &view);
-	grass_shader.setMat4("projection", &projection);
 
 	string guitar_pack_path = models_folder + "backpack\\backpack.obj";//"container\\container.obj";
 	Model guitar_pack = Model(guitar_pack_path.c_str());
@@ -258,26 +255,18 @@ int main(int argc, char** argv)
 	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
 	ourShader.use();
 	ourShader.setMat4("model", &model);
-	ourShader.setMat4("view", &view);
-	ourShader.setMat4("projection", &projection);
 	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
 	highlight_shader.use();
 	highlight_shader.setMat4("model", &model);
-	highlight_shader.setMat4("view", &view);
-	highlight_shader.setMat4("projection", &projection);
 	// Reflective
 	Shader reflective_shader("reflective_v.glsl", "reflective_f.glsl");
 	reflective_shader.use();
 	reflective_shader.setMat4("model", &model);
-	reflective_shader.setMat4("view", &view);
-	reflective_shader.setMat4("projection", &projection);
 	reflective_shader.setVec3("cam_pos", &cam_pos);
 	// Refractive
 	Shader refractive_shader("refractive_v.glsl", "refractive_f.glsl");
 	refractive_shader.use();
 	refractive_shader.setMat4("model", &model);
-	refractive_shader.setMat4("view", &view);
-	refractive_shader.setMat4("projection", &projection);
 	refractive_shader.setVec3("cam_pos", &cam_pos);
 
 	string window_path = models_folder + "window\\window.obj";
@@ -307,6 +296,43 @@ int main(int argc, char** argv)
 	skybox_shader.setMat4("view", &view);
 	skybox_shader.setMat4("projection", &projection);
 
+	// Share view and projection matrices via Uniform buffer
+	unsigned int mat4_size = sizeof(glm::mat4);
+	vector<Shader> sharing_shaders = {
+		ourShader,
+		ground_shader,
+		grass_shader,
+		highlight_shader,
+		reflective_shader,
+		refractive_shader
+	};
+	for (std::vector<Shader>::iterator it = sharing_shaders.begin(); it != sharing_shaders.end(); ++it)
+	{
+		unsigned int uni_block_idx= glGetUniformBlockIndex(it->ID, "shared_matrices");
+
+		glUniformBlockBinding(it->ID, uni_block_idx, 0);
+	}
+
+	unsigned int shared_matrices_ubo;
+	glGenBuffers(1, &shared_matrices_ubo);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, shared_matrices_ubo);
+	glBufferData(GL_UNIFORM_BUFFER, // target
+		2*mat4_size, // buffer size
+		NULL, // Data
+		GL_STATIC_DRAW); // access pattern
+	//glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	// Link entire buffer to binding point 0
+	glBindBufferRange(GL_UNIFORM_BUFFER,
+		0, // binding point index
+		shared_matrices_ubo, // buffer object
+		0, // buffer start address
+		2*mat4_size); // buffer end address
+	// send matrices
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, mat4_size, glm::value_ptr(projection));
+	glBufferSubData(GL_UNIFORM_BUFFER, mat4_size, mat4_size, glm::value_ptr(view));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 	// Lights
 	glm::vec3 ambient_color = 0.25f*glm::vec3(0.1f, 0.2f, .05f);
 
@@ -324,7 +350,7 @@ int main(int argc, char** argv)
 	pl.diffuse = (1.f/steradians) * sunlight_color;
 	pl.specular = sunlight_color;
 	pl.intensity = 10.f;
-	pl.direction = glm::normalize(glm::vec3(1.f, 1.f, -1.f));
+	pl.direction = glm::normalize(glm::vec3(1.f, 1.f, 1.f));
 	glm::vec3 sun_rot_axis(0., 1., 0.);
 
 	FlashLight f;
@@ -448,7 +474,10 @@ int main(int argc, char** argv)
 
 		ourShader.use();
 		ourShader.setMat4("model", &model);
-		ourShader.setMat4("view", &view);
+		//ourShader.setMat4("view", &view);
+		glBindBuffer(GL_UNIFORM_BUFFER, shared_matrices_ubo);
+		glBufferSubData(GL_UNIFORM_BUFFER, mat4_size, mat4_size, glm::value_ptr(view));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		ourShader.setVec3("view_pos", &cam_pos);
 
 		highlight_shader.use();
@@ -499,6 +528,7 @@ int main(int argc, char** argv)
 		glStencilMask(0xFF);
 		ourShader.use();
 		ourShader.setMat4("model", &model);
+		/*
 		reflective_shader.use();
 		reflective_shader.setMat4("model", &model);
 		reflective_shader.setMat4("view", &view);
@@ -510,7 +540,7 @@ int main(int argc, char** argv)
 		refractive_shader.setMat4("view", &view);
 		refractive_shader.setVec3("cam_pos", &cam_pos);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);*/
 		guitar_pack.draw(ourShader);
 
 

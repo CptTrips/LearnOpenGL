@@ -4,8 +4,12 @@ layout(location = 1) in vec3 model_normal; // vertex normal
 layout(location=2) in vec2 tex_coord_in;
 
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+
+layout (std140) uniform shared_matrices
+{
+	mat4 projection;
+	mat4 view;
+};
 
 out vec3 normal;
 out vec3 world_pos;
