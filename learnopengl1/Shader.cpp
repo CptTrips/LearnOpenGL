@@ -49,16 +49,30 @@ unsigned int Shader::loadSubShader(const char* sub_shader_path, GLuint shader_ty
 	return shader_id;
 }
 
-Shader::Shader(const char* vertexPath, const char* fragmentPath)
+Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometry_path)
 {
-	std::cout << "Loading shader \n" << vertexPath << "\n" << fragmentPath << std::endl;
+	//std::cout << "Loading shader \n" << vertexPath << "\n" << fragmentPath << std::endl;
 	unsigned int vertex_shader = loadSubShader(vertexPath, GL_VERTEX_SHADER);
 	unsigned int fragment_shader = loadSubShader(fragmentPath, GL_FRAGMENT_SHADER);
+	std::vector<unsigned int> shader_list =
+	{
+		vertex_shader,
+		fragment_shader
+	};
 
+	unsigned int geometry_shader;
+	if (geometry_path)
+	{
+		geometry_shader = loadSubShader(geometry_path, GL_GEOMETRY_SHADER);
+		shader_list.push_back(geometry_shader);
+	}
+		
 	// combine into shader program
 	ID = glCreateProgram();
-	glAttachShader(ID, vertex_shader);
-	glAttachShader(ID, fragment_shader);
+	for (unsigned int shader : shader_list)
+	{
+		glAttachShader(ID, shader);
+	}
 	glLinkProgram(ID);
 
 	// print any linking errors
@@ -72,8 +86,10 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 	}
 
 	// delete shaders now that they're linked
-	glDeleteShader(vertex_shader);
-	glDeleteShader(fragment_shader);
+	for (unsigned int shader : shader_list)
+	{
+		glDeleteShader(shader);
+	}
 }
 
 

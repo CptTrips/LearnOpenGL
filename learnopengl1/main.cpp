@@ -212,8 +212,6 @@ int main(int argc, char** argv)
 	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 
-
-
 	// Load model
 	string models_folder = "models\\";
 
@@ -252,7 +250,7 @@ int main(int argc, char** argv)
 	string guitar_pack_path = models_folder + "backpack\\backpack.obj";//"container\\container.obj";
 	Model guitar_pack = Model(guitar_pack_path.c_str());
 	glm::mat4 model = glm::mat4(1.0f); // model transform
-	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
+	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl", "geometry_shader.glsl");
 	ourShader.use();
 	ourShader.setMat4("model", &model);
 	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
@@ -306,7 +304,7 @@ int main(int argc, char** argv)
 		reflective_shader,
 		refractive_shader
 	};
-	for (std::vector<Shader>::iterator it = sharing_shaders.begin(); it != sharing_shaders.end(); ++it)
+	for (vector<Shader>::iterator it = sharing_shaders.begin(); it != sharing_shaders.end(); ++it)
 	{
 		unsigned int uni_block_idx= glGetUniformBlockIndex(it->ID, "shared_matrices");
 
@@ -473,6 +471,7 @@ int main(int argc, char** argv)
 		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
 
 		ourShader.use();
+		ourShader.setFloat("time", t);
 		ourShader.setMat4("model", &model);
 		//ourShader.setMat4("view", &view);
 		glBindBuffer(GL_UNIFORM_BUFFER, shared_matrices_ubo);

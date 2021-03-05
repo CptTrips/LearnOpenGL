@@ -11,16 +11,19 @@ layout (std140) uniform shared_matrices
 	mat4 view;
 };
 
-out vec3 normal;
-out vec3 world_pos;
-out vec2 tex_coord;
+out VS_OUT
+{
+	vec3 normal;
+	vec3 world_pos;
+	vec2 tex_coord;
+} vs_out;
 
 void main()
 {
     gl_Position = projection * view * model * vec4(aPos, 1.0); 
 
-    world_pos = vec3(model * vec4(aPos, 1.0));
-    normal = transpose(inverse(mat3(model))) * model_normal;
+    vs_out.world_pos = vec3(model * vec4(aPos, 1.0));
+    vs_out.normal = transpose(inverse(mat3(model))) * model_normal;
 
-    tex_coord = tex_coord_in;
+    vs_out.tex_coord = tex_coord_in;
 }
