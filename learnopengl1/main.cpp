@@ -171,41 +171,22 @@ void pass_lights_to_shader(Shader &s, PointLight p, PlanarLight pl, FlashLight f
 	s.setFloat("flashlight.intensity", f.intensity);
 }
 
-int main(int argc, char** argv)
+void many_quad_scene(GLFWwindow* window)
 {
-	// Initialize GLFW
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	float quadVertices[] = {
+		// positions     // colors
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+		-0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
 
-	// Create window object
-	GLFWwindow* window = glfwCreateWindow(window_width, window_height, "LearnOpenGL", NULL, NULL);
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+		 0.05f,  0.05f,  0.0f, 1.0f, 1.0f
+	};
+}
 
-	//Initialize GLAD
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return -1;
-	}
-
-	// Specify the viewport (OpenGL area within the GLFW window)
-	glViewport(0, 0, 800, 600);
-
-	// Specify the resize callback function so viewport adapts on window resize
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-	// Capture mouse and process movement
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, mouse_callback);
-
+void cubemap_scene(GLFWwindow* window)
+{
 	// 3D Transformations
 	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
 	
@@ -250,7 +231,7 @@ int main(int argc, char** argv)
 	string guitar_pack_path = models_folder + "backpack\\backpack.obj";//"container\\container.obj";
 	Model guitar_pack = Model(guitar_pack_path.c_str());
 	glm::mat4 model = glm::mat4(1.0f); // model transform
-	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl", "geometry_shader.glsl");
+	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
 	ourShader.use();
 	ourShader.setMat4("model", &model);
 	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
@@ -602,11 +583,52 @@ int main(int argc, char** argv)
 		glfwPollEvents();
 	}
 
+	glDeleteFramebuffers(1, &fbo);
+}
+
+int main(int argc, char** argv)
+{
+	// Initialize GLFW
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// Create window object
+	GLFWwindow* window = glfwCreateWindow(window_width, window_height, "LearnOpenGL", NULL, NULL);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);
+
+	//Initialize GLAD
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return -1;
+	}
+
+	// Specify the viewport (OpenGL area within the GLFW window)
+	glViewport(0, 0, 800, 600);
+
+	// Specify the resize callback function so viewport adapts on window resize
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	// Capture mouse and process movement
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
+
+	//cubemap_scene(window);
+
+	
+	
 	// Clean-up
 	//glDeleteVertexArrays(1, &VAO);
 	//glDeleteBuffers(1, &VBO);
 	//glDeleteProgram(shaderProgram); // should probably implement destructor in Shader
-	glDeleteFramebuffers(1, &fbo);
 	glfwTerminate();
 	return 0;
 
