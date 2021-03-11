@@ -256,6 +256,29 @@ void cubemap_scene(GLFWwindow* window)
 	Model cube = Model(cube_path.c_str());
 	glm::mat4 cube_model = glm::translate(glm::mat4(1.), glm::vec3(2., -1.2, -3.));
 
+	string gull_path = models_folder + "gull\\gull.obj";
+	Model gull = Model(gull_path.c_str());
+	Shader gull_shader("instance_v.glsl", "FragmentShader.glsl");
+	gull_shader.use();
+	gull_shader.setMat4("model", &model);
+	glm::vec2 translations[100];
+	int index = 0;
+	float offset = 0.1f;
+	for (int y = -10; y < 10; y += 2)
+	{
+		for (int x = -10; x < 10; x += 2)
+		{
+			glm::vec2 translation;
+			translation.x = (float)x / 10.0f + offset;
+			translation.y = (float)y / 10.0f + offset;
+			translations[index++] = translation;
+		}
+	}
+	for (unsigned int i = 0; i < 100; i++)
+	{
+		gull_shader.setVec2(("offsets[" + std::to_string(i) + "]"), &translations[i]);
+	}
+
 	
 	// Framebuffer shader
 	Shader pp_shader("postprocess_v.glsl", "postprocess_f.glsl");
