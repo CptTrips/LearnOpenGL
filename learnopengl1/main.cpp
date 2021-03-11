@@ -261,22 +261,25 @@ void cubemap_scene(GLFWwindow* window)
 	Shader gull_shader("instance_v.glsl", "FragmentShader.glsl");
 	gull_shader.use();
 	gull_shader.setMat4("model", &model);
-	glm::vec2 translations[100];
+	const int gull_count = 100;
+	const int gull_xy = 10;
+	glm::vec3 translations[gull_count];
 	int index = 0;
-	float offset = 0.1f;
-	for (int y = -10; y < 10; y += 2)
+	float offset = .1f;
+	for (int y = -gull_xy; y < gull_xy; y += 2)
 	{
-		for (int x = -10; x < 10; x += 2)
+		for (int x = -gull_xy; x < gull_xy; x += 2)
 		{
-			glm::vec2 translation;
-			translation.x = (float)x / 10.0f + offset;
-			translation.y = (float)y / 10.0f + offset;
+			glm::vec3 translation;
+			translation.x = (float)x / 1.0f + offset;
+			translation.z = (float)y / 1.0f + offset;
+			translation.y = 2.f;
 			translations[index++] = translation;
 		}
 	}
-	for (unsigned int i = 0; i < 100; i++)
+	for (unsigned int i = 0; i < gull_count; i++)
 	{
-		gull_shader.setVec2(("offsets[" + std::to_string(i) + "]"), &translations[i]);
+		gull_shader.setVec3(("offsets[" + std::to_string(i) + "]"), &translations[i]);
 	}
 
 	
@@ -306,7 +309,8 @@ void cubemap_scene(GLFWwindow* window)
 		grass_shader,
 		highlight_shader,
 		reflective_shader,
-		refractive_shader
+		refractive_shader,
+		gull_shader
 	};
 	for (vector<Shader>::iterator it = sharing_shaders.begin(); it != sharing_shaders.end(); ++it)
 	{
@@ -363,6 +367,7 @@ void cubemap_scene(GLFWwindow* window)
 
 
 	pass_lights_to_shader(ourShader, p, pl, f);
+	pass_lights_to_shader(gull_shader, p, pl, f);
 	pass_lights_to_shader(ground_shader, p, pl, f);
 
 	// Framebuffer
@@ -482,6 +487,7 @@ void cubemap_scene(GLFWwindow* window)
 		glBufferSubData(GL_UNIFORM_BUFFER, mat4_size, mat4_size, glm::value_ptr(view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		ourShader.setVec3("view_pos", &cam_pos);
+		gull_shader.setVec3("view_pos", &cam_pos);
 
 		highlight_shader.use();
 		highlight_shader.setMat4("model", &model);
@@ -545,6 +551,11 @@ void cubemap_scene(GLFWwindow* window)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);*/
 		guitar_pack.draw(ourShader);
+
+
+		// Draw gulls
+		gull_shader.use();
+		gull.draw(gull_shader, gull_count);
 
 
 		// Draw grass
@@ -644,7 +655,7 @@ int main(int argc, char** argv)
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
-	//cubemap_scene(window);
+	cubemap_scene(window);
 
 	
 	
