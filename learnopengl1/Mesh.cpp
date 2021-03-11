@@ -44,7 +44,7 @@ void Mesh::setup_mesh()
 	glBindVertexArray(0);
 }
 
-void Mesh::draw(Shader& shader)
+void Mesh::draw(Shader& shader, int instances)
 {
 	unsigned int diffuse_tex_count = 0;
 	unsigned int specular_tex_count = 0;
@@ -73,6 +73,9 @@ void Mesh::draw(Shader& shader)
 
 	// Draw call
 	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	if (instances > 1)
+		glDrawElementsInstanced(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0, instances);
+	else
+		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }

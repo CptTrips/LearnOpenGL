@@ -23,7 +23,7 @@ public:
 	{
 		load_model(path);
 	}
-	void draw(Shader& shader);
+	void draw(Shader& shader, int instances=1);
 
 private:
 	vector<Texture> loaded_textures;

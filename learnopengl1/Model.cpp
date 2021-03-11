@@ -1,10 +1,10 @@
 #include "Model.h"
 
 
-void Model::draw(Shader& shader)
+void Model::draw(Shader& shader, int instances)
 {
 	for (unsigned int i = 0; i < meshes.size(); i++)
-		meshes[i].draw(shader);
+		meshes[i].draw(shader, instances);
 }
 
 void Model::load_model(string path, bool flip_uvs)
