@@ -50,7 +50,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 // Function to process all key inputs
-void processInput(GLFWwindow* window, Shader* s)
+void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -190,99 +190,53 @@ void cubemap_scene(GLFWwindow* window)
 	// 3D Transformations
 	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
 	
-	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 100.0f;
+	float fov = 45.0f, aspect_ratio = 4.0f / 3.0f, min_cul = 0.1f, max_cul = 1000.0f;
 	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, min_cul, max_cul);
 
-	// Load model
+	// Load models
 	string models_folder = "models\\";
-
-	string square_path = models_folder + "square\\square.obj";
-	Model ground = Model(square_path.c_str());
-	Shader ground_shader("ground_v.glsl", "ground_f.glsl");
-	glm::mat4 ground_model = glm::mat4(1.0f);
-	ground_model = glm::translate(ground_model, glm::vec3(0., -1.7, 0.));
-	ground_model = glm::rotate(ground_model, -glm::radians(90.f), glm::vec3(1., 0., 0.));
-	ground_model = glm::scale(ground_model, glm::vec3(100., 100., 100.));
-	ground_model = glm::translate(ground_model, glm::vec3(-.5, -.5, 0.));
-	glm::vec3 ground_color = glm::vec3(.3, .12, 0.);
-	ground_shader.use();
-	ground_shader.setVec3("ground_color", &ground_color);
-	ground_shader.setMat4("model", &ground_model);
-
-	string grass_model_path = models_folder + "grass\\grass.obj";
-	Model grass = Model(grass_model_path.c_str());
-	vector<glm::vec3> vegetation;
-	vegetation.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
-	vegetation.push_back(glm::vec3(1.5f, 0.0f, 0.51f));
-	vegetation.push_back(glm::vec3(0.0f, 0.0f, 0.7f));
-	vegetation.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
-	vegetation.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
-	for (int i = 0; i < vegetation.size(); i++)
-	{
-		vegetation[i] *= 3.f;
-		vegetation[i] += glm::vec3(0.f, -1.7f, 0.f);
-	}
-	glm::mat4 grass_model = glm::mat4(1.);
-	grass_model = glm::translate(grass_model, glm::vec3(-0.5, -.5, 0.));
-	Shader grass_shader("grass_v.glsl", "grass_f.glsl");
-	grass_shader.use();
-	grass_shader.setMat4("model", &grass_model);
-
-	string guitar_pack_path = models_folder + "backpack\\backpack.obj";//"container\\container.obj";
-	Model guitar_pack = Model(guitar_pack_path.c_str());
-	glm::mat4 model = glm::mat4(1.0f); // model transform
-	Shader ourShader("VertexShader.glsl", "FragmentShader.glsl");
-	ourShader.use();
-	ourShader.setMat4("model", &model);
-	Shader highlight_shader("highlight_v.glsl", "highlight_f.glsl");
-	highlight_shader.use();
-	highlight_shader.setMat4("model", &model);
-	// Reflective
-	Shader reflective_shader("reflective_v.glsl", "reflective_f.glsl");
-	reflective_shader.use();
-	reflective_shader.setMat4("model", &model);
-	reflective_shader.setVec3("cam_pos", &cam_pos);
-	// Refractive
-	Shader refractive_shader("refractive_v.glsl", "refractive_f.glsl");
-	refractive_shader.use();
-	refractive_shader.setMat4("model", &model);
-	refractive_shader.setVec3("cam_pos", &cam_pos);
-
-	string window_path = models_folder + "window\\window.obj";
-	Model red_window = Model(window_path.c_str());
-	glm::mat4 window_model = glm::translate(glm::mat4(1.), glm::vec3(0., 0., 5.));
-
-	string cube_path = models_folder + "container\\container.obj";
-	Model cube = Model(cube_path.c_str());
-	glm::mat4 cube_model = glm::translate(glm::mat4(1.), glm::vec3(2., -1.2, -3.));
-
-	string gull_path = models_folder + "gull\\gull.obj";
-	Model gull = Model(gull_path.c_str());
-	Shader gull_shader("instance_v.glsl", "FragmentShader.glsl");
-	gull_shader.use();
-	gull_shader.setMat4("model", &model);
-	const int gull_count = 100;
-	const int gull_xy = 10;
-	glm::vec3 translations[gull_count];
-	int index = 0;
-	float offset = .1f;
-	for (int y = -gull_xy; y < gull_xy; y += 2)
-	{
-		for (int x = -gull_xy; x < gull_xy; x += 2)
-		{
-			glm::vec3 translation;
-			translation.x = (float)x / 1.0f + offset;
-			translation.z = (float)y / 1.0f + offset;
-			translation.y = 2.f;
-			translations[index++] = translation;
-		}
-	}
-	for (unsigned int i = 0; i < gull_count; i++)
-	{
-		gull_shader.setVec3(("offsets[" + std::to_string(i) + "]"), &translations[i]);
-	}
-
 	
+	string square_path = models_folder + "square\\square.obj";
+	string cube_path = models_folder + "cube\\cube.obj";
+
+	string planet_path = models_folder + "planet\\planet.obj";
+	Model planet(planet_path.c_str());
+	Shader planet_shader("VertexShader.glsl", "FragmentShader.glsl");
+	glm::mat4 planet_space = glm::mat4(1.);
+	planet_space = glm::scale(planet_space, glm::vec3(4.f));
+
+	string rock_path = models_folder + "rock\\rock.obj";
+	Model rock(rock_path.c_str());
+	Shader rock_shader("instance_v.glsl", "FragmentShader.glsl");
+	unsigned int rock_count = 1000;
+	glm::mat4* rock_spaces;
+	rock_spaces = new glm::mat4[rock_count];
+	float radius = 50.; //mean radius of the asteroids
+	float offset = 2.5f; // deviation of asteroids from mean
+	for (unsigned int i = 0; i < rock_count; i++)
+	{
+		glm::mat4 model = glm::mat4(1.f);
+		// location around the planet
+		float angle = (float)i / (float)rock_count * 360.;
+		float displacement = (rand() % (int)(2 * offset * 100)) / 100.f - offset;
+		float x = sin(angle) * radius + displacement;
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.f - offset;
+		float y = displacement * .4f;
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.f - offset;
+		float z = cos(angle) * radius + displacement;
+		model = glm::translate(model, glm::vec3(x, y, z));
+
+		// rescale the rock
+		float scale = (rand() % 20) / 100.f + 0.05;
+		model = glm::scale(model, glm::vec3(scale));
+
+		// random orientation
+		angle = (rand() % 360);
+		model = glm::rotate(model, angle, glm::vec3(.4f, .6f, .8f));
+
+		rock_spaces[i] = model;
+	}
+
 	// Framebuffer shader
 	Shader pp_shader("postprocess_v.glsl", "postprocess_f.glsl");
 	Model frame(square_path.c_str());
@@ -304,13 +258,8 @@ void cubemap_scene(GLFWwindow* window)
 	// Share view and projection matrices via Uniform buffer
 	unsigned int mat4_size = sizeof(glm::mat4);
 	vector<Shader> sharing_shaders = {
-		ourShader,
-		ground_shader,
-		grass_shader,
-		highlight_shader,
-		reflective_shader,
-		refractive_shader,
-		gull_shader
+		rock_shader,
+		planet_shader
 	};
 	for (vector<Shader>::iterator it = sharing_shaders.begin(); it != sharing_shaders.end(); ++it)
 	{
@@ -356,7 +305,7 @@ void cubemap_scene(GLFWwindow* window)
 	pl.diffuse = (1.f/steradians) * sunlight_color;
 	pl.specular = sunlight_color;
 	pl.intensity = 10.f;
-	pl.direction = glm::normalize(glm::vec3(1.f, 1.f, 1.f));
+	pl.direction = glm::normalize(glm::vec3(1.f, .1f, 1.f));
 	glm::vec3 sun_rot_axis(0., 1., 0.);
 
 	FlashLight f;
@@ -366,9 +315,8 @@ void cubemap_scene(GLFWwindow* window)
 	glm::vec3 flashlight_offset;
 
 
-	pass_lights_to_shader(ourShader, p, pl, f);
-	pass_lights_to_shader(gull_shader, p, pl, f);
-	pass_lights_to_shader(ground_shader, p, pl, f);
+	pass_lights_to_shader(rock_shader, p, pl, f);
+	pass_lights_to_shader(planet_shader, p, pl, f);
 
 	// Framebuffer
 	unsigned int fbo;
@@ -451,7 +399,7 @@ void cubemap_scene(GLFWwindow* window)
 	glDepthFunc(GL_LEQUAL);
 
 	// Enable stencil buffer
-	glEnable(GL_STENCIL_TEST);
+	//glEnable(GL_STENCIL_TEST);
 
 	// Enable Blending
 	glEnable(GL_BLEND);
@@ -465,7 +413,7 @@ void cubemap_scene(GLFWwindow* window)
 	while (!glfwWindowShouldClose(window))
 	{
 		// Handle input
-		processInput(window, &ourShader);
+		processInput(window);
 
 		// Rendering
 		float new_t = glfwGetTime();
@@ -479,113 +427,34 @@ void cubemap_scene(GLFWwindow* window)
 		// Co-ordinate systems
 		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
 
-		ourShader.use();
-		ourShader.setFloat("time", t);
-		ourShader.setMat4("model", &model);
-		//ourShader.setMat4("view", &view);
+		rock_shader.use();
+		rock_shader.setFloat("time", t);
 		glBindBuffer(GL_UNIFORM_BUFFER, shared_matrices_ubo);
 		glBufferSubData(GL_UNIFORM_BUFFER, mat4_size, mat4_size, glm::value_ptr(view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-		ourShader.setVec3("view_pos", &cam_pos);
-		gull_shader.setVec3("view_pos", &cam_pos);
+		rock_shader.setVec3("view_pos", &cam_pos);
 
-		highlight_shader.use();
-		highlight_shader.setMat4("model", &model);
-		highlight_shader.setMat4("view", &view);
-
-		ground_shader.use();
-		ground_shader.setMat4("view", &view);
-
-		grass_shader.use();
-		grass_shader.setMat4("view", &view);
-
-		// Flashlight
-		ourShader.use();
-		f.offset = glm::vec3(glm::inverse(view) * flashlight_offset_viewspace);
-		ourShader.setVec3("flashlight.offset", &f.offset);
-		ourShader.setVec3("flashlight.direction", cam_fwd.x, cam_fwd.y, cam_fwd.z);
+		planet_shader.use();
+		planet_shader.setVec3("view_pos", &cam_pos);
 
 		// Render to framebuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
 		glEnable(GL_DEPTH_TEST);
-		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		// Draw planet
+		planet_shader.use();
+		planet_shader.setMat4("model", &planet_space);
+		planet.draw(planet_shader);
 
-
-		// Draw ground
-		/*
-		glStencilMask(0x00);
-		ground_shader.use();
-		ground_shader.setMat4("model", &ground_model);
-		ground.draw(ground_shader);
-		*/
-
-		// Draw cube
-		ourShader.use();
-		ourShader.setMat4("model", &cube_model);
-		cube.draw(ourShader);
-
-		// Draw window
-		grass_shader.use();
-		red_window.draw(grass_shader);
-
-		// Draw backpack
-		glStencilMask(0xFF);
-		ourShader.use();
-		ourShader.setMat4("model", &model);
-		/*
-		reflective_shader.use();
-		reflective_shader.setMat4("model", &model);
-		reflective_shader.setMat4("view", &view);
-		reflective_shader.setVec3("cam_pos", &cam_pos);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
-		refractive_shader.use();
-		refractive_shader.setMat4("model", &model);
-		refractive_shader.setMat4("view", &view);
-		refractive_shader.setVec3("cam_pos", &cam_pos);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);*/
-		guitar_pack.draw(ourShader);
-
-
-		// Draw gulls
-		gull_shader.use();
-		gull.draw(gull_shader, gull_count);
-
-
-		// Draw grass
-		glStencilMask(0x00);
-		grass_shader.use();
-		std::map<float, glm::vec3> sorted;
-		for (unsigned int i = 0; i < vegetation.size(); i++)
+		// Draw rocks
+		for (unsigned int i = 0; i < rock_count; i++)
 		{
-			float distance = glm::length(cam_pos - vegetation[i]);
-			sorted[distance] = vegetation[i];
+			planet_shader.setMat4("model", &rock_spaces[i]);
+			rock.draw(planet_shader);
 		}
-		for (std::map<float,glm::vec3>::reverse_iterator it=sorted.rbegin();
-			it!=sorted.rend();
-			it++)
-		{
-			grass_model = glm::translate(glm::mat4(1.), it->second);
-			grass_shader.setMat4("model", &grass_model);
-			red_window.draw(grass_shader);
-		}
-
-
-		// Highlight
-		/*
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-		glStencilMask(0x00); // don't write to the stencil buffer. can't we just stencil op with three keeps?
-		//glDisable(GL_DEPTH_TEST);
-		
-		highlight_shader.use();
-		guitar_pack.draw(highlight_shader);
-		*/
 
 		// Skybox
 		skybox_shader.use();
@@ -593,12 +462,7 @@ void cubemap_scene(GLFWwindow* window)
 		skybox_shader.setMat4("view", &skybox_view);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_tex_id);
-		skybox.draw(skybox_shader);
-
-
-		glStencilMask(0xFF); // Actually need this for glClear to work!
-
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		//skybox.draw(skybox_shader);
 
 		// Post-process framebuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -618,6 +482,8 @@ void cubemap_scene(GLFWwindow* window)
 	}
 
 	glDeleteFramebuffers(1, &fbo);
+
+	delete rock_spaces;
 }
 
 int main(int argc, char** argv)
