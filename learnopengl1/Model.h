@@ -19,6 +19,7 @@ using std::cout; using std::endl;
 class Model
 {
 public:
+	vector<Mesh> meshes;
 	Model(const char* path)
 	{
 		load_model(path);
@@ -27,7 +28,6 @@ public:
 
 private:
 	vector<Texture> loaded_textures;
-	vector<Mesh> meshes;
 	string directory;
 
 	void load_model(string path, bool flip_uvs=true);

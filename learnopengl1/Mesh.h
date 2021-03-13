@@ -32,13 +32,13 @@ public:
 	vector<Vertex> vertices;
 	vector<unsigned int> indices;
 	vector<Texture> textures;
+	unsigned int VAO, VBO, EBO;
 
 	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
 
 	void draw(Shader& shader, int instances=1);
 
 private:
-	unsigned int VAO, VBO, EBO;
 
 	void setup_mesh();
 };
