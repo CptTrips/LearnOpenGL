@@ -2,6 +2,7 @@
 layout(location = 0) in vec3 aPos; // the position variable has attribute position 0
 layout(location = 1) in vec3 model_normal; // vertex normal
 layout(location=2) in vec2 tex_coord_in;
+layout(location=3) in mat4 instance_space;
 
 uniform mat4 model;
 
@@ -19,10 +20,10 @@ out vec2 tex_coord;
 
 void main()
 {
-    vec3 offset_pos = aPos + offsets[gl_InstanceID];
-    gl_Position = projection * view * model * vec4(offset_pos, 1.0); 
+    //vec3 offset_pos = aPos + offsets[gl_InstanceID]; //Using a uniform limits the number of instances
+    gl_Position = projection * view * instance_space * vec4(aPos, 1.0); 
 
-    world_pos = vec3(model * vec4(offset_pos, 1.0));
+    world_pos = vec3(instance_space * vec4(aPos, 1.0));
     normal = transpose(inverse(mat3(model))) * model_normal;
 
     tex_coord = tex_coord_in;
