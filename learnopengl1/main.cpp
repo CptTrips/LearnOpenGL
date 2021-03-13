@@ -23,9 +23,8 @@ const int window_height = 600;
 
 constexpr float steradians = 4.f * glm::pi<float>();
 
-const float radius = 10.f;
-glm::vec3 cam_pos = glm::vec3(0.0f, 0.0f, radius);
-glm::vec3 cam_fwd = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cam_pos = glm::vec3(0.0f, 6.0f, 60.f);
+glm::vec3 cam_fwd = glm::vec3(0.0f, -0.1f, -1.0f);
 glm::vec3 cam_up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 float t = 0.f;
@@ -208,11 +207,11 @@ void cubemap_scene(GLFWwindow* window)
 	string rock_path = models_folder + "rock\\rock.obj";
 	Model rock(rock_path.c_str());
 	Shader rock_shader("instance_v.glsl", "FragmentShader.glsl");
-	unsigned int rock_count = 1000;
+	unsigned int rock_count = 4e4;
 	glm::mat4* rock_spaces;
 	rock_spaces = new glm::mat4[rock_count];
-	float radius = 50.; //mean radius of the asteroids
-	float offset = 2.5f; // deviation of asteroids from mean
+	float radius = 100.; //mean radius of the asteroids
+	float offset = 25.f; // deviation of asteroids from mean
 	for (unsigned int i = 0; i < rock_count; i++)
 	{
 		glm::mat4 model = glm::mat4(1.f);
@@ -236,6 +235,31 @@ void cubemap_scene(GLFWwindow* window)
 
 		rock_spaces[i] = model;
 	}
+	// Pass instance transform array, rock_spaces, to each mesh of the rock model
+	unsigned int buffer;
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, rock_count * sizeof(glm::mat4), &rock_spaces[0], GL_STATIC_DRAW);
+	for (unsigned int i = 0; i < rock.meshes.size(); i++)
+	{
+		unsigned int VAO = rock.meshes[i].VAO;
+		glBindVertexArray(VAO);
+
+		std::size_t vec4size = sizeof(glm::vec4);
+		glEnableVertexAttribArray(3);
+
+		//have to give attrib to each column individually as can only send 4 floats at a time
+		for (unsigned int j = 0; j < 4; j++)
+		{
+			glVertexAttribPointer(3 + j, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)(j*vec4size));
+			glEnableVertexAttribArray(3 + j);
+			//only move to the next instance transform after done rendering each 
+			glVertexAttribDivisor(3 + j, 1);
+		}
+
+		glBindVertexArray(0);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Framebuffer shader
 	Shader pp_shader("postprocess_v.glsl", "postprocess_f.glsl");
@@ -296,7 +320,7 @@ void cubemap_scene(GLFWwindow* window)
 	p.specular = light_color;
 	p.diffuse = light_color / steradians;
 	p.ambient = glm::vec3(0.f);
-	p.intensity = 1.f;
+	p.intensity = 0.f;
 	p.position = glm::vec3(1.f, -1.3f, 5.f);
 
 	PlanarLight pl;
@@ -419,19 +443,18 @@ void cubemap_scene(GLFWwindow* window)
 		float new_t = glfwGetTime();
 		dt = new_t - t;
 		t = new_t;
-		/*
-		cout << "frametime " << dt << endl;
-		*/
+		cout << "frametime " << 1000.*dt << "ms" << endl;
 		//cout << "framerate " << 1./dt << endl;
 
 		// Co-ordinate systems
 		view = glm::lookAt(cam_pos, cam_pos + cam_fwd, cam_up);
 
-		rock_shader.use();
-		rock_shader.setFloat("time", t);
 		glBindBuffer(GL_UNIFORM_BUFFER, shared_matrices_ubo);
 		glBufferSubData(GL_UNIFORM_BUFFER, mat4_size, mat4_size, glm::value_ptr(view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+		rock_shader.use();
+		rock_shader.setFloat("time", t);
 		rock_shader.setVec3("view_pos", &cam_pos);
 
 		planet_shader.use();
@@ -450,11 +473,16 @@ void cubemap_scene(GLFWwindow* window)
 		planet.draw(planet_shader);
 
 		// Draw rocks
+		/* Non-instanced method
 		for (unsigned int i = 0; i < rock_count; i++)
 		{
 			planet_shader.setMat4("model", &rock_spaces[i]);
 			rock.draw(planet_shader);
 		}
+		*/
+		// Instanced method
+		rock_shader.use();
+		rock.draw(rock_shader, rock_count);
 
 		// Skybox
 		skybox_shader.use();
@@ -483,7 +511,7 @@ void cubemap_scene(GLFWwindow* window)
 
 	glDeleteFramebuffers(1, &fbo);
 
-	delete rock_spaces;
+	delete[] rock_spaces;
 }
 
 int main(int argc, char** argv)
