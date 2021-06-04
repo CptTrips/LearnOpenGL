@@ -36,6 +36,9 @@ float mouse_x, mouse_y = 0.;
 float phi = glm::acos(cam_fwd.z);
 float theta = glm::acos(cam_fwd.y);
 
+
+bool gamma_correction = true;
+
 struct TextureData
 {
 	unsigned char* data;
@@ -82,6 +85,21 @@ void processInput(GLFWwindow* window)
 	{
 		cam_pos -= cam_ds * cam_fwd;
 		//cout << glm::to_string(cam_pos) << endl;
+	}
+	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+	{
+		if (gamma_correction)
+		{
+			gamma_correction = false;
+			glDisable(GL_FRAMEBUFFER_SRGB);
+		}
+		else
+		{
+			gamma_correction = true;
+			glEnable(GL_FRAMEBUFFER_SRGB);
+		}
+
+		cout << "Toggle gamma correction" << endl;
 	}
  }
 
@@ -432,6 +450,10 @@ void planet_scene(GLFWwindow* window)
 	// Enable face culling
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_FRONT);
+
+	// Enable sRGB gamma correction
+	if (gamma_correction) 
+		glEnable(GL_FRAMEBUFFER_SRGB);
 
 	// Main rendering loop
 	while (!glfwWindowShouldClose(window))
