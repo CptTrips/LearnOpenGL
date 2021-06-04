@@ -184,7 +184,7 @@ void many_quad_scene(GLFWwindow* window)
 	};
 }
 
-void cubemap_scene(GLFWwindow* window)
+void planet_scene(GLFWwindow* window)
 {
 	// 3D Transformations
 	glm::mat4 view = glm::lookAt(cam_pos, cam_fwd + cam_pos, cam_up); // view transform
@@ -328,7 +328,7 @@ void cubemap_scene(GLFWwindow* window)
 	pl.ambient = 0.3*glm::vec3(0.5f, .8f, 0.96f);
 	pl.diffuse = (1.f/steradians) * sunlight_color;
 	pl.specular = sunlight_color;
-	pl.intensity = 10.f;
+	pl.intensity = 1.f;
 	pl.direction = glm::normalize(glm::vec3(1.f, .1f, 1.f));
 	glm::vec3 sun_rot_axis(0., 1., 0.);
 
@@ -443,7 +443,7 @@ void cubemap_scene(GLFWwindow* window)
 		float new_t = glfwGetTime();
 		dt = new_t - t;
 		t = new_t;
-		cout << "frametime " << 1000.*dt << "ms" << endl;
+		//cout << "frametime " << 1000.*dt << "ms" << endl;
 		//cout << "framerate " << 1./dt << endl;
 
 		// Co-ordinate systems
@@ -532,7 +532,7 @@ int main(int argc, char** argv)
 	}
 	glfwMakeContextCurrent(window);
 
-	//Initialize GLAD
+	//Initialize GLAD (Loads OpenGL routines)
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
@@ -549,7 +549,7 @@ int main(int argc, char** argv)
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
-	cubemap_scene(window);
+	planet_scene(window);
 
 	
 	
