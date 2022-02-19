@@ -57,6 +57,8 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
+	// Move camera
+	//	Sprint
 	float cam_speed;
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
@@ -65,7 +67,10 @@ void processInput(GLFWwindow* window)
 	else {
 		cam_speed = 4.f;
 	}
+
 	float cam_ds = cam_speed * dt;
+	
+	//	Move direction
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		cam_pos += cam_ds * cam_fwd;
@@ -86,22 +91,28 @@ void processInput(GLFWwindow* window)
 		cam_pos -= cam_ds * cam_fwd;
 		//cout << glm::to_string(cam_pos) << endl;
 	}
-	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+
+ }
+
+// Toggle gamma correction
+void gamma_toggle_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_L && action == GLFW_PRESS)
 	{
 		if (gamma_correction)
 		{
 			gamma_correction = false;
 			glDisable(GL_FRAMEBUFFER_SRGB);
+			cout << "Gamma correction OFF" << endl;
 		}
 		else
 		{
 			gamma_correction = true;
 			glEnable(GL_FRAMEBUFFER_SRGB);
+			cout << "Gamma correction ON" << endl;
 		}
-
-		cout << "Toggle gamma correction" << endl;
 	}
- }
+}
 
 void mouse_callback(GLFWwindow* window, double x, double y)
 {
@@ -331,7 +342,7 @@ void planet_scene(GLFWwindow* window)
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	// Lights
-	glm::vec3 ambient_color = 0.25f*glm::vec3(0.1f, 0.2f, .05f);
+	glm::vec3 ambient_color = glm::vec3(0.f, 0.f, 1.f) / 256;
 
 	PointLight p;
 	glm::vec3 light_color = glm::vec3(1.f, .2f, 0.f);;
@@ -570,6 +581,9 @@ int main(int argc, char** argv)
 	// Capture mouse and process movement
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouse_callback);
+
+	// Toggle gamma correction
+	glfwSetKeyCallback(window, gamma_toggle_callback);
 
 	planet_scene(window);
 
