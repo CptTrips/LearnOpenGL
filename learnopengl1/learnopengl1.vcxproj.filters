@@ -21,5 +21,67 @@
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image_boilerplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="awesomeface.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="container.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="container2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="wall.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cubemap_f.glsl" />
+    <None Include="cubemap_v.glsl" />
+    <None Include="FragmentShader.glsl" />
+    <None Include="grass_v.glsl" />
+    <None Include="grass_f.glsl" />
+    <None Include="ground_f.glsl" />
+    <None Include="ground_v.glsl" />
+    <None Include="highlight_v.glsl" />
+    <None Include="light_source_f.glsl" />
+    <None Include="light_source_v.glsl" />
+    <None Include="postprocess_f.glsl" />
+    <None Include="postprocess_v.glsl" />
+    <None Include="reflective_f.glsl" />
+    <None Include="reflective_v.glsl" />
+    <None Include="refractive_f.glsl" />
+    <None Include="refractive_v.glsl" />
+    <None Include="VertexShader.glsl" />
+    <None Include="window_f.glsl" />
+    <None Include="window_v.glsl" />
+    <None Include="highlight_f.glsl" />
   </ItemGroup>
 </Project>
